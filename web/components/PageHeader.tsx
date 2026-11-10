@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 /**
  * Page header — iOS large-title style with brand display type.
  * `marketing` is kept as an alias of the default for backwards compatibility.
@@ -13,8 +15,8 @@ export function PageHeader({
 }: {
   label: string;
   title: string;
-  tagline?: string;
-  action?: React.ReactNode;
+  tagline?: ReactNode;
+  action?: ReactNode;
   variant?: 'ios' | 'marketing';
 }) {
   void variant;
@@ -31,9 +33,9 @@ export function PageHeader({
           {title}
         </h1>
         {tagline ? (
-          <p className="hidden sm:block text-[15px] text-[var(--text-muted)] mt-1 max-w-full sm:max-w-xl leading-snug">
+          <div className="hidden sm:block text-[15px] text-[var(--text-muted)] mt-1 max-w-full sm:max-w-xl leading-snug [&_a]:font-semibold [&_a]:text-[var(--primary)]">
             {tagline}
-          </p>
+          </div>
         ) : null}
       </div>
       {action ? (

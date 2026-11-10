@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { PickCard } from '@/components/PickCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
@@ -245,47 +246,53 @@ export default function AdminMarketplacePage() {
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
+        <AdminPageHeader
+          title="Marketplace"
+          tagline={
+            <>
+              Same data as user marketplace. Review listings and fix duplicates.{' '}
+              <Link href="/marketplace" className="text-[var(--primary)] font-semibold hover:underline">
+                View as customer
+              </Link>
+            </>
+          }
+        />
         <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Marketplace</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Same data as user marketplace. Review listings and fix duplicates.{' '}
-            <Link href="/marketplace" className="text-[var(--primary)] hover:underline">View as customer →</Link>
-          </p>
-          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-            <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Show picks:</span>
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6 p-4 rounded-2xl bg-[var(--accent)]/10 border border-[var(--accent)]/25">
+            <span className="text-sm font-medium text-[var(--text)]">Show picks:</span>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showPending}
                 onChange={(e) => setShowPending(e.target.checked)}
-                className="w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                className="w-4 h-4 rounded border-[var(--separator)] text-[var(--accent)] focus:ring-[var(--accent)]"
               />
-              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Pending</span>
+              <span className="text-sm font-medium text-[var(--text)]">Pending</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showNotStated}
                 onChange={(e) => setShowNotStated(e.target.checked)}
-                className="w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                className="w-4 h-4 rounded border-[var(--separator)] text-[var(--accent)] focus:ring-[var(--accent)]"
               />
-              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Not stated</span>
+              <span className="text-sm font-medium text-[var(--text)]">Not stated</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showSettled}
                 onChange={(e) => setShowSettled(e.target.checked)}
-                className="w-4 h-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                className="w-4 h-4 rounded border-[var(--separator)] text-[var(--accent)] focus:ring-[var(--accent)]"
               />
-              <span className="text-sm font-medium text-amber-900 dark:text-amber-100">Settled</span>
+              <span className="text-sm font-medium text-[var(--text)]">Settled</span>
             </label>
-            <span className="text-xs text-amber-800 dark:text-amber-200">
+            <span className="text-xs text-[var(--text-muted)]">
               Removed/deleted picks never shown. Settled hidden by default.
             </span>
           </div>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 shrink-0">Price/Sales:</label>
+            <label className="text-sm font-medium text-[var(--text-muted)] shrink-0">Price/Sales:</label>
             <select
               value={priceFilter}
               onChange={(e) => setPriceFilter(e.target.value as PriceFilter)}

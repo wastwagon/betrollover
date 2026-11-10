@@ -21,6 +21,7 @@ import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { SegmentedControl } from '@/components/ios/SegmentedControl';
 import { useRouter } from 'next/navigation';
 import { resultChipClass } from '@/lib/result-chip';
+import { EmptyState } from '@/components/EmptyState';
 import { DashboardActionGroups } from './DashboardActionGroups';
 import { StatCard } from './StatCard';
 import type { FeedPick, FollowedTipster, Purchase, PurchaseStats, TipsterStats, User, DashboardSurface } from './types';
@@ -112,7 +113,7 @@ export function UserDashboardHome({
             {surface === 'buy' ? (
             <Link
               href="/invite"
-              className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] transition-colors hover:border-[var(--primary)]/35"
+              className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 ios-grouped-section transition-colors hover:bg-[var(--fill-secondary)]/40"
             >
               <div className="flex items-start gap-4 min-w-0 flex-1">
                 <span className="w-12 h-12 rounded-xl bg-[var(--primary-light)] flex items-center justify-center flex-shrink-0 text-[var(--primary)]">
@@ -143,30 +144,28 @@ export function UserDashboardHome({
 
             {surface === 'buy' && !isFootballOnlyDiscovery() ? (
               <section className="mb-6 sm:mb-8">
-                <div className="rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--card)]">
-                  <div className="p-5 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
-                      <div className="flex items-start gap-4 min-w-0 flex-1">
-                        <div className="shrink-0 w-12 h-12 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs font-semibold">
-                          Live
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-display font-semibold text-[var(--text)] text-base sm:text-lg mb-1">
-                            {t('dashboard.multisport_title')}
-                          </h3>
-                          <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('dashboard.multisport_desc')}</p>
-                        </div>
+                <div className="ios-grouped-section p-4 sm:p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 min-w-0">
+                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                      <div className="shrink-0 w-10 h-10 rounded-xl bg-[var(--fill-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[11px] font-semibold">
+                        Live
                       </div>
-                      <div className="flex flex-wrap gap-2 sm:shrink-0 min-w-0">
-                        {['Football', 'Basketball', 'Tennis'].map((label) => (
-                          <div
-                            key={label}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[var(--border)] bg-[var(--fill-secondary)] text-[var(--text)]"
-                          >
-                            <span>{label}</span>
-                          </div>
-                        ))}
+                      <div className="min-w-0">
+                        <h3 className="font-semibold tracking-tight text-[var(--text)] text-[15px] mb-1">
+                          {t('dashboard.multisport_title')}
+                        </h3>
+                        <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">{t('dashboard.multisport_desc')}</p>
                       </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 sm:shrink-0 min-w-0">
+                      {['Football', 'Basketball', 'Tennis'].map((label) => (
+                        <span
+                          key={label}
+                          className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[var(--fill-secondary)] text-[var(--text-muted)]"
+                        >
+                          {label}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -175,7 +174,7 @@ export function UserDashboardHome({
 
             {surface === 'sell' && tipsterStats ? (
               <section className="mb-6 sm:mb-8">
-                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">
+                <h2 className="text-[13px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] mb-2 sm:mb-3 px-0.5">
                   {t('dashboard.performance')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -199,7 +198,7 @@ export function UserDashboardHome({
             {surface === 'buy' && isSubscriptionsEnabled() && vipFeedPicks.length > 0 ? (
               <section className="mb-6 sm:mb-8">
                 <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-2 mb-2 sm:mb-3 px-0.5 min-w-0">
-                  <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                  <h2 className="text-[13px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">
                     {t('dashboard.vip_picks_section_title')}
                   </h2>
                   <Link href="/subscriptions" className="text-xs font-medium text-[var(--primary)] hover:underline w-fit">
@@ -256,18 +255,18 @@ export function UserDashboardHome({
 
             {surface === 'buy' ? (
             <section className="mb-6 sm:mb-8">
-              <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">
+              <h2 className="text-[13px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] mb-2 sm:mb-3 px-0.5">
                 {t('dashboard.followed_tipsters')}
               </h2>
-              <div className="rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--card)]">
-                <div className="p-4 sm:p-6">
+              <div className="ios-grouped-section">
+                <div className="p-4 sm:p-5">
                   {following.length > 0 ? (
                     <div className="flex flex-wrap gap-2 mb-4">
                       {following.map((person) => (
                         <Link
                           key={person.id}
                           href={`/tipsters/${person.username}`}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg)]/70 hover:bg-[var(--fill-secondary)] border border-[var(--border)]/60 transition-colors"
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--fill-secondary)]/60 hover:bg-[var(--fill-secondary)] transition-colors"
                         >
                           {person.avatarUrl ? (
                             <Image
@@ -328,24 +327,24 @@ export function UserDashboardHome({
                           );
                         })}
                       </div>
-                      <Link href="/marketplace" className="inline-block mt-3 text-sm font-medium text-[var(--primary)] hover:underline">
+                      <Link href="/marketplace" className="inline-block mt-3 text-sm font-semibold text-[var(--primary)] hover:underline">
                         {t('dashboard.view_all_marketplace')}
                       </Link>
                     </div>
                   ) : following.length > 0 ? (
-                    <p className="text-[var(--text-muted)] text-sm">
-                      {t('dashboard.no_new_picks')}{' '}
-                      <Link href="/tipsters" className="text-[var(--primary)] hover:underline">
-                        {t('dashboard.follow_more')}
-                      </Link>
-                    </p>
+                    <EmptyState
+                      title={t('dashboard.no_new_picks')}
+                      description={t('dashboard.follow_more')}
+                      actionLabel={t('dashboard.follow_more')}
+                      actionHref="/tipsters"
+                    />
                   ) : (
-                    <p className="text-[var(--text-muted)] text-sm">
-                      <Link href="/tipsters" className="text-[var(--primary)] hover:underline font-medium">
-                        {t('dashboard.follow_more')}
-                      </Link>{' '}
-                      {t('dashboard.follow_tipsters')}
-                    </p>
+                    <EmptyState
+                      title={t('dashboard.followed_tipsters')}
+                      description={t('dashboard.follow_tipsters')}
+                      actionLabel={t('dashboard.follow_more')}
+                      actionHref="/tipsters"
+                    />
                   )}
                 </div>
               </div>
@@ -354,7 +353,7 @@ export function UserDashboardHome({
 
             {surface === 'buy' && purchaseStats !== null ? (
               <section className="mb-6 sm:mb-8">
-                <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 sm:mb-3 px-0.5">
+                <h2 className="text-[13px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] mb-2 sm:mb-3 px-0.5">
                   {t('dashboard.purchase_summary')}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -383,25 +382,25 @@ export function UserDashboardHome({
 
             {surface === 'sell' && tipsterStats && minimumROI !== null && minimumWinRate !== null ? (
               <section className="mb-6 sm:mb-8">
-                <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-[var(--card)] border border-[var(--border)]">
-                  <div className="p-5 sm:p-6 md:p-8">
+                <div className="ios-grouped-section">
+                  <div className="p-5 sm:p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 md:gap-6 min-w-0">
                       <div className="flex items-start gap-4 sm:gap-5 flex-1 min-w-0">
                         <div
-                          className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center ${
+                          className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center ${
                             canSellPaid
-                              ? 'bg-[var(--success)] text-white'
-                              : 'bg-[var(--accent)] text-white'
+                              ? 'bg-[var(--success)]/15 text-[var(--success)]'
+                              : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'
                           }`}
                         >
                           {canSellPaid ? (
-                            <IconEarnings className="w-6 h-6 sm:w-7 sm:h-7" />
+                            <IconEarnings className="w-6 h-6" />
                           ) : (
-                            <IconTrending className="w-6 h-6 sm:w-7 sm:h-7" />
+                            <IconTrending className="w-6 h-6" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className={`text-lg sm:text-xl font-bold mb-1.5 ${canSellPaid ? 'text-[var(--success)]' : 'text-[var(--accent)]'}`}>
+                          <h3 className="text-[17px] font-semibold tracking-tight mb-1.5 text-[var(--text)]">
                             {canSellPaid ? t('dashboard.earn_ready') : t('dashboard.earn_build_performance')}
                           </h3>
                           <p className="text-sm leading-relaxed text-[var(--text-muted)]">
@@ -448,67 +447,67 @@ export function UserDashboardHome({
 
             {surface === 'buy' ? (
             <section className="mb-6 sm:mb-8">
-              <div className="rounded-[var(--radius)] overflow-hidden border border-[var(--separator)] bg-[var(--card)]">
-                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[var(--border)]/80 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap min-w-0 sm:gap-3">
-                  <h2 className="font-semibold text-[var(--text)] text-base sm:text-lg">{t('dashboard.recent_purchases')}</h2>
-                  {purchases.length > 0 ? (
-                    <Link href="/my-purchases" className="text-sm font-medium text-[var(--primary)] hover:underline w-fit">
-                      {t('dashboard.view_all')}
-                    </Link>
-                  ) : null}
-                </div>
-                <div className="p-4 sm:p-6">
-                  {purchases.length > 0 ? (
-                    <div className="space-y-2 sm:space-y-3">
-                      {purchases.slice(0, 5).map((purchase) => {
-                        if (!purchase.pick) return null;
-                        const totalOdds = Number(purchase.pick.totalOdds || 0);
-                        const isActive = purchase.pick.status === 'active' && purchase.pick.result === 'pending';
-                        return (
-                          <Link
-                            key={purchase.id}
-                            href="/my-purchases"
-                            className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 p-3 sm:p-4 rounded-xl bg-[var(--bg)]/70 hover:bg-[var(--fill-secondary)] border border-transparent hover:border-[var(--separator)] transition-colors min-w-0"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs sm:text-sm text-[var(--text-muted)]">
-                                {purchase.pick.totalPicks} picks · {totalOdds.toFixed(2)} odds
-                              </p>
-                            </div>
-                            <div className="flex items-center justify-between gap-2 sm:gap-3 shrink-0 sm:justify-end w-full sm:w-auto min-w-0">
-                              <span
-                                className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                                  isActive
-                                    ? resultChipClass('active')
-                                    : resultChipClass(purchase.pick.result)
-                                }`}
-                              >
-                                {isActive
-                                  ? t('status.active')
-                                  : purchase.pick.result === 'won'
-                                    ? t('status.won')
-                                    : purchase.pick.result === 'lost'
-                                      ? t('status.lost')
-                                      : purchase.pick.status || '—'}
-                              </span>
-                              <span className="font-semibold text-[var(--text)] tabular-nums text-sm sm:text-base">
-                                {formatPrimary(Number(purchase.purchasePrice || 0))}
-                              </span>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-10 sm:py-12">
-                      <p className="text-[var(--text-muted)] mb-4 sm:mb-6">{t('my_purchases.no_purchases')}</p>
-                      <Link href="/marketplace" className={buttonClassName()}>
-                        {t('my_purchases.browse_marketplace')}
-                      </Link>
-                    </div>
-                  )}
-                </div>
+              <div className="flex items-baseline justify-between gap-3 mb-2 sm:mb-3 px-0.5">
+                <h2 className="text-[13px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">
+                  {t('dashboard.recent_purchases')}
+                </h2>
+                {purchases.length > 0 ? (
+                  <Link href="/my-purchases" className="text-sm font-semibold text-[var(--primary)] hover:underline w-fit">
+                    {t('dashboard.view_all')}
+                  </Link>
+                ) : null}
               </div>
+              {purchases.length > 0 ? (
+                <div className="ios-grouped-section overflow-hidden divide-y divide-[var(--separator)]">
+                  {purchases.slice(0, 5).map((purchase) => {
+                    if (!purchase.pick) return null;
+                    const totalOdds = Number(purchase.pick.totalOdds || 0);
+                    const isActive = purchase.pick.status === 'active' && purchase.pick.result === 'pending';
+                    return (
+                      <Link
+                        key={purchase.id}
+                        href="/my-purchases"
+                        className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 px-4 py-3.5 sm:px-5 hover:bg-[var(--fill-secondary)]/50 transition-colors min-w-0"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] text-[var(--text-muted)]">
+                            {purchase.pick.totalPicks} picks · {totalOdds.toFixed(2)} odds
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 sm:gap-3 shrink-0 sm:justify-end w-full sm:w-auto min-w-0">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                              isActive
+                                ? resultChipClass('active')
+                                : resultChipClass(purchase.pick.result)
+                            }`}
+                          >
+                            {isActive
+                              ? t('status.active')
+                              : purchase.pick.result === 'won'
+                                ? t('status.won')
+                                : purchase.pick.result === 'lost'
+                                  ? t('status.lost')
+                                  : purchase.pick.status || '—'}
+                          </span>
+                          <span className="font-semibold text-[var(--text)] tabular-nums text-[15px]">
+                            {formatPrimary(Number(purchase.purchasePrice || 0))}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="ios-grouped-section">
+                  <EmptyState
+                    title={t('my_purchases.no_purchases')}
+                    description={t('my_purchases.no_purchases_desc')}
+                    actionLabel={t('my_purchases.browse_marketplace')}
+                    actionHref="/marketplace"
+                  />
+                </div>
+              )}
             </section>
             ) : null}
           </div>

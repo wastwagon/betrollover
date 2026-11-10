@@ -251,26 +251,26 @@ export default function LeaderboardPage({
         <div className="mb-8 w-full min-w-0 overflow-hidden">
         <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]">
           {([
-            { key: 'all' as SportFilter,               icon: '🌍', labelKey: 'marketplace.filter_all_sports' },
-            { key: 'football' as SportFilter,          icon: '⚽', labelKey: 'nav.football' },
-            { key: 'basketball' as SportFilter,        icon: '🏀', labelKey: 'nav.basketball' },
-            { key: 'rugby' as SportFilter,             icon: '🏉', labelKey: 'nav.rugby' },
-            { key: 'mma' as SportFilter,               icon: '🥊', labelKey: 'nav.mma' },
-            { key: 'volleyball' as SportFilter,        icon: '🏐', labelKey: 'nav.volleyball' },
-            { key: 'hockey' as SportFilter,            icon: '🏒', labelKey: 'nav.hockey' },
-            { key: 'american_football' as SportFilter, icon: '🏈', labelKey: 'nav.american_football' },
-          ]).map(s => (
+            { key: 'all' as SportFilter, labelKey: 'marketplace.filter_all_sports' as const },
+            { key: 'football' as SportFilter, labelKey: 'nav.football' as const },
+            { key: 'basketball' as SportFilter, labelKey: 'nav.basketball' as const },
+            { key: 'rugby' as SportFilter, labelKey: 'nav.rugby' as const },
+            { key: 'mma' as SportFilter, labelKey: 'nav.mma' as const },
+            { key: 'volleyball' as SportFilter, labelKey: 'nav.volleyball' as const },
+            { key: 'hockey' as SportFilter, labelKey: 'nav.hockey' as const },
+            { key: 'american_football' as SportFilter, labelKey: 'nav.american_football' as const },
+          ]).map((s) => (
             <button
               key={s.key}
               type="button"
               onClick={() => setSport(s.key)}
-              className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+              className={`flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 sport === s.key
-                  ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                  : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                  ? 'bg-[var(--primary)] text-white'
+                  : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
               }`}
             >
-              <span>{s.icon}</span><span>{t(s.labelKey)}</span>
+              {t(s.labelKey)}
             </button>
           ))}
         </div>
@@ -278,10 +278,10 @@ export default function LeaderboardPage({
         ) : null}
 
         <div
-          className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--card)]/80 px-3 py-3 sm:px-4 sm:py-3.5 text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed max-w-4xl"
+          className="mb-6 rounded-2xl border border-[var(--primary)]/20 bg-[var(--primary-light)]/70 px-4 py-3.5 text-[13px] sm:text-[14px] text-[var(--text-muted)] leading-relaxed max-w-4xl"
           role="note"
         >
-          <p className="font-semibold text-[var(--text)] mb-1.5">{t('leaderboard.important_note_title')}</p>
+          <p className="font-semibold text-[var(--text)] mb-1.5 text-[13px]">{t('leaderboard.important_note_title')}</p>
           <p className="m-0">
             {period === 'all_time'
               ? t('leaderboard.rank_notice_all_time', {
@@ -306,21 +306,21 @@ export default function LeaderboardPage({
         {loading ? (
           <LoadingSkeleton count={10} variant="list" />
         ) : entries.length === 0 ? (
-          <div className="text-center py-16 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
-            <p className="font-display text-[var(--text)] font-semibold">{t('common.no_results')}</p>
-            <p className="text-[var(--text-muted)] text-sm mt-1 max-w-md mx-auto">
+          <div className="ios-grouped-section text-center py-12 px-4">
+            <p className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{t('common.no_results')}</p>
+            <p className="text-[var(--text-muted)] text-[15px] mt-2 max-w-md mx-auto leading-relaxed">
               {loggedIn ? t('leaderboard.empty_logged_sub') : t('home.join_subtitle')}
             </p>
             {loggedIn ? (
               <Link
                 href="/tipsters"
-                className={buttonClassName({ className: 'mt-4' })}
+                className={buttonClassName({ className: 'mt-5' })}
               >
-                {t('leaderboard.empty_logged_cta')} →
+                {t('leaderboard.empty_logged_cta')}
               </Link>
             ) : (
-              <Link href="/register" className={buttonClassName({ className: 'mt-4' })}>
-                {t('nav.register')} →
+              <Link href="/register" className={buttonClassName({ className: 'mt-5' })}>
+                {t('nav.register')}
               </Link>
             )}
           </div>
@@ -365,7 +365,7 @@ export default function LeaderboardPage({
               const joinVipClasses =
                 'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--accent-light)] text-[var(--accent)] border border-[var(--accent)]/40 hover:opacity-90 transition-colors w-full md:w-auto md:min-w-[7.5rem]';
               const subscribedVipClasses =
-                'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--text-muted)]/15 text-[var(--text-muted)] border border-[var(--border)] cursor-default w-full md:w-auto md:min-w-[7.5rem]';
+                'inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--text-muted)]/15 text-[var(--text-muted)] border border-[var(--separator)] cursor-default w-full md:w-auto md:min-w-[7.5rem]';
 
               return (
                 <div
@@ -373,7 +373,7 @@ export default function LeaderboardPage({
                   className={`flex flex-col rounded-2xl border transition-colors hover:border-[var(--primary)]/30 min-w-0 w-full max-w-full overflow-x-hidden ${
                     rank <= 3
                       ? 'bg-[var(--card)] border-[var(--accent)]/35'
-                      : 'bg-[var(--card)] border-[var(--border)]'
+                      : 'bg-[var(--card)] border-[var(--separator)]'
                   }`}
                 >
                 <div
@@ -389,7 +389,7 @@ export default function LeaderboardPage({
                           src={avatarSrc}
                           alt={entry.display_name}
                           width={40} height={40}
-                          className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                          className="w-10 h-10 rounded-full object-cover border-2 border-white"
                           unoptimized={shouldUnoptimizeGoogleAvatar(avatarSrc)}
                         />
                       ) : (
@@ -476,7 +476,7 @@ export default function LeaderboardPage({
                     {hasVipPackage ? (
                       !meResolved ? (
                         <div
-                          className="h-8 min-w-[7.5rem] rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse"
+                          className="h-8 min-w-[7.5rem] rounded-lg bg-[var(--bg)] border border-[var(--separator)] animate-pulse"
                           aria-hidden
                         />
                       ) : subbedToThisVip ? (
@@ -515,10 +515,10 @@ export default function LeaderboardPage({
                   </div>
                 </div>
 
-                  <div className="md:hidden flex items-center gap-2 flex-wrap justify-end px-4 pb-3.5 pt-2 border-t border-[var(--border)]/50">
+                  <div className="md:hidden flex items-center gap-2 flex-wrap justify-end px-4 pb-3.5 pt-2 border-t border-[var(--separator)]/50">
                     {hasVipPackage ? (
                       !meResolved ? (
-                        <div className="h-8 min-w-[7.5rem] rounded-lg bg-[var(--bg)] border border-[var(--border)] animate-pulse" aria-hidden />
+                        <div className="h-8 min-w-[7.5rem] rounded-lg bg-[var(--bg)] border border-[var(--separator)] animate-pulse" aria-hidden />
                       ) : subbedToThisVip ? (
                         <div
                           className={subscribedVipClasses}

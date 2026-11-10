@@ -48,7 +48,7 @@ const jsonLd = [
       'Purchase-protected football predictions',
       'Tipster ROI and win rate leaderboard',
       'Match Winner Tips VIP subscriptions',
-      '7-Day BetRollover board',
+      '7-Day Rollover board',
       'Free Accumulator Builder for signed-in users',
       'Ghana Premier League tipster predictions',
       'Both teams to score predictions',

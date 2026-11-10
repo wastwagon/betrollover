@@ -495,16 +495,16 @@ export default function TipsterProfileClient({
     );
   }
 
-  const SPORT_META: Record<string, { icon: string; label: string }> = {
-    Football:          { icon: '⚽', label: 'Football' },
-    Basketball:        { icon: '🏀', label: 'Basketball' },
-    Rugby:             { icon: '🏉', label: 'Rugby' },
-    MMA:               { icon: '🥊', label: 'MMA' },
-    Volleyball:        { icon: '🏐', label: 'Volleyball' },
-    Hockey:            { icon: '🏒', label: 'Hockey' },
-    'American Football': { icon: '🏈', label: 'American Football' },
-    Tennis:            { icon: '🎾', label: 'Tennis' },
-    'Multi-Sport':     { icon: '🌍', label: 'Multi-Sport' },
+  const SPORT_META: Record<string, { label: string }> = {
+    Football: { label: 'Football' },
+    Basketball: { label: 'Basketball' },
+    Rugby: { label: 'Rugby' },
+    MMA: { label: 'MMA' },
+    Volleyball: { label: 'Volleyball' },
+    Hockey: { label: 'Hockey' },
+    'American Football': { label: 'American Football' },
+    Tennis: { label: 'Tennis' },
+    'Multi-Sport': { label: 'Multi-Sport' },
   };
 
   const { tipster, marketplace_coupons, archived_coupons = [], is_following } = profile;
@@ -823,13 +823,13 @@ export default function TipsterProfileClient({
               <button
                 type="button"
                 onClick={() => setSportFilter('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                   sportFilter === 'all'
-                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
                 }`}
               >
-                🌐 {t('tipster.all_sports')}
+                {t('tipster.all_sports')}
               </button>
               {availableSports.map((s) => {
                 const meta = SPORT_META[s];
@@ -839,13 +839,13 @@ export default function TipsterProfileClient({
                     type="button"
                     key={s}
                     onClick={() => setSportFilter(s)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
                       sportFilter === s
-                        ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                        : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                        ? 'bg-[var(--primary)] text-white'
+                        : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
                     }`}
                   >
-                    {meta.icon} {meta.label}
+                    {meta.label}
                   </button>
                 );
               })}

@@ -126,42 +126,42 @@ export default function ResourcesPage() {
           </Link>
         </p>
 
-        <section className="mb-8 rounded-2xl border border-[var(--border)] bg-[var(--card)]/60 p-4 sm:p-5">
+        <section className="mb-8 rounded-2xl border border-[var(--separator)] bg-[var(--card)]/60 p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">{t('resources.popular_guides')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link
               href="/guides/purchase-protection"
-              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="rounded-xl border border-[var(--separator)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('resources.escrow_link')}
             </Link>
             <Link
               href="/guides/evaluate-tipsters"
-              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="rounded-xl border border-[var(--separator)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('resources.eval_link')}
             </Link>
             <Link
               href="/guides/read-tipster-stats"
-              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="rounded-xl border border-[var(--separator)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('resources.stats_link')}
             </Link>
             <Link
-              href="/guides/accumulator-settlement"
-              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              href="/guides/how-accumulators-settle"
+              className="rounded-xl border border-[var(--separator)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('resources.acca_link')}
             </Link>
             <Link
               href="/guides/free-and-paid-picks"
-              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="rounded-xl border border-[var(--separator)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('resources.free_link')}
             </Link>
             <Link
               href="/guides/leaderboard-ranking"
-              className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="rounded-xl border border-[var(--separator)] bg-[var(--card)] px-3 py-3 text-sm font-medium text-[var(--text)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('resources.board_link')}
             </Link>
@@ -171,7 +171,7 @@ export default function ResourcesPage() {
         {/* Skill level overview cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {SKILL_OVERVIEW.map(card => (
-            <div key={card.level} className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors">
+            <div key={card.level} className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--separator)] hover:border-[var(--primary)]/30 transition-colors">
               <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase mb-2 ${LEVEL_COLORS[card.level]}`}>
                 {LEVEL_LABELS[card.level]}
               </span>
@@ -195,7 +195,7 @@ export default function ResourcesPage() {
                 className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeSport === sf.key
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--text)]'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--separator)] hover:border-[var(--primary)] hover:text-[var(--text)]'
                 }`}
               >
                 <span>{sf.icon}</span><span>{sf.label}</span>
@@ -235,7 +235,7 @@ export default function ResourcesPage() {
                 {[1, 2, 3].map(i => <LoadingSkeleton key={i} count={1} className="h-56 rounded-2xl" />)}
               </div>
             ) : visibleCategories.length === 0 ? (
-              <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
+              <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-12 text-center">
                 <p className="font-display text-lg font-semibold text-[var(--text)] mb-1">{t('resources.empty_guides_title')}</p>
                 <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto mb-5">
                   {t('resources.empty_guides_body')}
@@ -252,8 +252,8 @@ export default function ResourcesPage() {
             ) : (
               <div className="space-y-8">
                 {visibleCategories.map(cat => (
-                  <section key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden">
-                    <div className="px-4 sm:px-6 py-5 border-b border-[var(--border)] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <section key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] overflow-hidden">
+                    <div className="px-4 sm:px-6 py-5 border-b border-[var(--separator)] flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                       <span className={`inline-flex w-fit px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${LEVEL_COLORS[cat.level] ?? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
                         {LEVEL_LABELS[cat.level] ?? cat.level}
                       </span>
@@ -270,7 +270,7 @@ export default function ResourcesPage() {
                           <Link
                             key={item.id}
                             href={`/resources/${cat.slug}/${item.slug}`}
-                            className="flex items-start gap-3 p-4 rounded-xl border border-[var(--border)] hover:border-[var(--primary)]/40 hover:bg-[var(--primary-light)]/10 transition-all group"
+                            className="flex items-start gap-3 p-4 rounded-xl border border-[var(--separator)] hover:border-[var(--primary)]/40 hover:bg-[var(--primary-light)]/10 transition-all group"
                           >
                             {(() => {
                               const TypeIcon = TYPE_ICONS[item.type] ?? IconBook;
@@ -306,7 +306,7 @@ export default function ResourcesPage() {
           <aside className="lg:w-72 flex-shrink-0 min-w-0 w-full">
             <div className="lg:sticky lg:top-24 space-y-4">
               <AdSlot zoneSlug="guides-sidebar" />
-              <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+              <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--separator)]">
                 <h3 className="text-sm font-bold text-[var(--text)] mb-3">Sports News</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   Stay up to date with transfers, injury reports, and team news across all sports.
@@ -315,7 +315,7 @@ export default function ResourcesPage() {
                   Read News →
                 </Link>
               </div>
-              <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)]">
+              <div className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--separator)]">
                 <h3 className="text-sm font-bold text-[var(--text)] mb-3">Leaderboard</h3>
                 <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-3">
                   See which tipsters rank highest in win rate, ROI, and consistency across all sports.

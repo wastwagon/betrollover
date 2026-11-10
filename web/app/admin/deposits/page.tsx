@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader, AdminStatTile } from '@/components/admin/AdminPageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { Input, fieldControlClassName } from '@/components/ui/Input';
 
@@ -74,24 +75,15 @@ export default function AdminDepositsPage() {
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Deposits Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">Review and approve deposit requests.</p>
-        </div>
+        <AdminPageHeader
+          title="Deposits"
+          tagline="Review and approve deposit requests."
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
-            <p className="text-sm opacity-90 mb-1">Total Deposits</p>
-            <p className="text-3xl font-bold">{deposits.length}</p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
-            <p className="text-sm opacity-90 mb-1">Pending</p>
-            <p className="text-3xl font-bold">{pendingCount}</p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
-            <p className="text-sm opacity-90 mb-1">Total Amount</p>
-            <p className="text-3xl font-bold">GHS {totalAmount.toFixed(2)}</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3 mb-6">
+          <AdminStatTile label="Total deposits" value={deposits.length} />
+          <AdminStatTile label="Pending" value={pendingCount} />
+          <AdminStatTile label="Total amount" value={`GHS ${totalAmount.toFixed(2)}`} />
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
@@ -133,64 +125,64 @@ export default function AdminDepositsPage() {
         )}
 
         {!loading && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="ios-grouped-section overflow-hidden">
             {deposits.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-gray-600 dark:text-gray-400 text-lg">No deposits found</p>
+                <p className="text-[var(--text-muted)] text-[15px]">No deposits found</p>
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
+                  <table className="min-w-full divide-y divide-[var(--separator)]">
+                    <thead className="bg-[var(--fill-secondary)]/50">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[12rem]">
+                        <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">ID</th>
+                        <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] min-w-[12rem]">
                           User / tipster
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reference</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">Amount</th>
+                        <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">Reference</th>
+                        <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">Status</th>
+                        <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">Date</th>
+                        <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em]">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="bg-[var(--card)] divide-y divide-[var(--separator)]">
                       {deposits.map((d) => (
-                        <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{d.id}</td>
-                          <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                        <tr key={d.id} className="hover:bg-[var(--fill-secondary)]/40 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--text)]">{d.id}</td>
+                          <td className="px-6 py-4 text-sm text-[var(--text)]">
                             <div className="font-semibold">
                               {d.userDisplayName?.trim() || d.userUsername || `User #${d.userId}`}
                             </div>
                             {d.userUsername ? (
-                              <div className="text-xs text-gray-500 dark:text-gray-400">@{d.userUsername}</div>
+                              <div className="text-xs text-[var(--text-muted)]">@{d.userUsername}</div>
                             ) : null}
                             {d.userEmail ? (
                               <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[14rem]" title={d.userEmail}>
                                 {d.userEmail}
                               </div>
                             ) : null}
-                            <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 font-mono">ID {d.userId}</div>
+                            <div className="text-[10px] text-[var(--text-tertiary)] mt-0.5 font-mono">ID {d.userId}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600 dark:text-green-400">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-[var(--primary)]">
                             {d.currency} {Number(d.amount).toFixed(2)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 font-mono">{d.reference}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-muted)] font-mono">{d.reference}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span
-                              className={`px-2 py-1 rounded text-xs font-medium ${
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
                                 d.status === 'completed'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  ? 'bg-[var(--success)]/15 text-[var(--success)]'
                                   : d.status === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                  ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                                  : 'bg-[var(--destructive)]/15 text-[var(--destructive)]'
                               }`}
                             >
                               {d.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-muted)]">
                             {new Date(d.createdAt).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -199,14 +191,14 @@ export default function AdminDepositsPage() {
                                 <button
                                   type="button"
                                   onClick={() => updateStatus(d.id, 'completed')}
-                                  className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors"
+                                  className="px-3 py-1.5 rounded-xl bg-[var(--primary)] hover:opacity-90 text-white text-sm font-semibold transition-opacity"
                                 >
                                   Approve
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => updateStatus(d.id, 'failed')}
-                                  className="px-3 py-1 rounded-lg bg-[var(--destructive)] hover:opacity-90 text-white text-sm font-medium transition-colors"
+                                  className="px-3 py-1.5 rounded-xl bg-[var(--destructive)] hover:opacity-90 text-white text-sm font-semibold transition-opacity"
                                 >
                                   Reject
                                 </button>
@@ -219,23 +211,23 @@ export default function AdminDepositsPage() {
                   </table>
                 </div>
                 {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="px-6 py-4 border-t border-[var(--separator)] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-2 sm:order-1"
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[var(--fill-secondary)] text-[var(--text)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity order-2 sm:order-1"
                     >
                       Previous
                     </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400 text-center order-1 sm:order-2">
+                    <span className="text-sm text-[var(--text-muted)] text-center order-1 sm:order-2">
                       Page {page} of {totalPages}
                     </span>
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors order-3"
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[var(--fill-secondary)] text-[var(--text)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity order-3"
                     >
                       Next
                     </button>

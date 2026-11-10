@@ -87,11 +87,11 @@ export function HomeFreeTipOfTheDay({
 
   if (loading) {
     return (
-      <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <section className="py-12 md:py-16 border-t border-[var(--separator)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-gutter-wide w-full min-w-0">
           <h2 className="text-base font-semibold text-[var(--text)] mb-4 sm:mb-6 sm:text-lg md:text-xl">{t('home.free_tip')}</h2>
           <div className="grid grid-cols-1 gap-3 sm:gap-4 min-w-0 max-w-md">
-            <div className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--border)]" />
+            <div className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--separator)]" />
           </div>
         </div>
       </section>
@@ -101,7 +101,7 @@ export function HomeFreeTipOfTheDay({
   if (tips.length === 0) return null;
 
   return (
-    <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+    <section className="py-12 md:py-16 border-t border-[var(--separator)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <div className="section-ux-gutter-wide w-full min-w-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
           <div className="min-w-0">

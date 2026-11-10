@@ -9,7 +9,6 @@ import {
 } from '@/components/home/HomeStepArtwork';
 import { UnifiedHeader } from '@/components/UnifiedHeader';
 import { AppFooter } from '@/components/AppFooter';
-import { AdSlot } from '@/components/AdSlot';
 import { HomeHero } from '@/components/HomeHero';
 import { HomeHeroBanner } from '@/components/HomeHeroBanner';
 import { HomeJoinCtaCard } from '@/components/HomeJoinCtaCard';
@@ -24,6 +23,7 @@ import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
+import { fetchNewsHub } from '@/lib/seo/hub-public-data';
 import { getLocale, buildT } from '@/lib/i18n';
 import { buttonClassName } from '@/components/ui/button-styles';
 import type { Metadata } from 'next';
@@ -61,11 +61,31 @@ function HomeStreamFallback() {
 async function HomeBelowFold() {
   const locale = await getLocale();
   const t = buildT(locale);
-  const [th, homeData] = await Promise.all([
+  const [th, homeData, newsItems] = await Promise.all([
     fetchSellingThresholds({ revalidate: 300 }),
     fetchHomePublicData({ revalidate: 30 }),
+    fetchNewsHub({ language: locale, revalidate: 120 }),
   ]);
   const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
+  const latestNews = newsItems
+    .map((row) => {
+      const slug = typeof row.slug === 'string' ? row.slug : '';
+      const title = typeof row.title === 'string' ? row.title : '';
+      if (!slug || !title) return null;
+      const summary =
+        (typeof row.excerpt === 'string' && row.excerpt) ||
+        (typeof row.summary === 'string' && row.summary) ||
+        (typeof row.description === 'string' && row.description) ||
+        '';
+      const publishedAt =
+        (typeof row.publishedAt === 'string' && row.publishedAt) ||
+        (typeof row.published_at === 'string' && row.published_at) ||
+        (typeof row.createdAt === 'string' && row.createdAt) ||
+        '';
+      return { slug, title, summary: summary.trim(), publishedAt };
+    })
+    .filter((x): x is NonNullable<typeof x> => !!x)
+    .slice(0, 3);
   const homeFaqs = [
     { question: t('home.faq_q1'), answer: t('home.faq_a1') },
     { question: t('home.faq_q2'), answer: t('home.faq_a2') },
@@ -81,9 +101,6 @@ async function HomeBelowFold() {
           initialTodayMatches={homeData.todayMatches}
           marketplaceItems={homeData.marketplaceItems}
         />
-        <div className="section-ux-rail-4xl w-full min-w-0">
-          <AdSlot zoneSlug="home-below-hero" fullWidth className="w-full" />
-        </div>
         {/* Tipsters immediately after the banner — Tipstrr-style discovery */}
         <HomePopularTipsters initialLeaderboard={homeData.topTipsters} />
         <HomeFollowingShelf />
@@ -91,12 +108,9 @@ async function HomeBelowFold() {
         <section id="free-tip-of-the-day" className="w-full min-w-0">
           <HomeFreeTipOfTheDay initialFreeTips={homeData.freeTips} />
         </section>
-        <div className="section-ux-rail-4xl w-full min-w-0">
-          <AdSlot zoneSlug="between-sections" fullWidth className="w-full" />
-        </div>
         <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
 
-        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-seo-body">
+        <section className="border-t border-[var(--separator)] w-full min-w-0" aria-labelledby="home-seo-body">
           <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
             <h2 id="home-seo-body" className="font-display text-lg sm:text-xl font-semibold text-[var(--text)] mb-3">
               {t('home.seo_body_h2')}
@@ -127,67 +141,73 @@ async function HomeBelowFold() {
           </div>
         </section>
 
-        <section className="border-t border-[var(--border)] w-full min-w-0">
-          <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.14em] text-[var(--primary)] mb-4">
+        <section className="border-t border-[var(--separator)] w-full min-w-0">
+          <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)] mb-4">
               {t('home.how_it_works')}
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 min-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 min-w-0">
               {[
                 { n: '01', title: t('home.step1_title'), desc: t('home.step1_desc') },
                 { n: '02', title: t('home.step2_title'), desc: t('home.step2_desc') },
                 { n: '03', title: t('home.step3_title'), desc: t('home.step3_desc') },
               ].map((step) => (
-                <div key={step.n} className="min-w-0">
-                  <p className="text-[11px] font-bold text-[var(--text-tertiary)] tracking-widest mb-1">{step.n}</p>
-                  <h3 className="font-display text-sm font-semibold text-[var(--text)] mb-1">{step.title}</h3>
-                  <p className="text-xs text-[var(--text-muted)] leading-relaxed line-clamp-3">{step.desc}</p>
+                <div
+                  key={step.n}
+                  className="min-w-0 rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-4 sm:px-5 sm:py-5"
+                >
+                  <p className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--fill-secondary)] text-[12px] font-semibold tabular-nums text-[var(--text-muted)] mb-3">
+                    {step.n}
+                  </p>
+                  <h3 className="font-display text-[15px] font-semibold text-[var(--text)] mb-1.5 leading-snug">
+                    {step.title}
+                  </h3>
+                  <p className="text-[13px] text-[var(--text-muted)] leading-relaxed line-clamp-4">{step.desc}</p>
                 </div>
               ))}
             </div>
-            <nav className="mt-5 flex flex-wrap gap-x-4 gap-y-2" aria-label={t('nav.short_guides')}>
-              <Link href="/guides/purchase-protection" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('guides.escrow_short')}
-              </Link>
-              <Link href="/guides/evaluate-tipsters" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('guides.eval_short')}
-              </Link>
-              <Link href="/guides/read-tipster-stats" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('guides.stats_short')}
-              </Link>
-              <Link href="/guides/accumulator-settlement" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('guides.acca_short')}
-              </Link>
-              <Link href="/guides/free-and-paid-picks" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('guides.free_short')}
-              </Link>
-              <Link href="/guides/leaderboard-ranking" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('guides.board_short')}
-              </Link>
-              <Link href="/buy-football-tips" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('buy.nav')}
-              </Link>
+            <nav
+              className="mt-5 flex gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide -mx-1 px-1 pb-1"
+              aria-label={t('nav.short_guides')}
+            >
+              {[
+                { href: '/guides/purchase-protection', label: t('guides.escrow_short') },
+                { href: '/guides/evaluate-tipsters', label: t('guides.eval_short') },
+                { href: '/guides/read-tipster-stats', label: t('guides.stats_short') },
+                { href: '/guides/how-accumulators-settle', label: t('guides.acca_short') },
+                { href: '/guides/free-and-paid-picks', label: t('guides.free_short') },
+                { href: '/guides/leaderboard-ranking', label: t('guides.board_short') },
+                { href: '/buy-football-tips', label: t('buy.nav') },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="shrink-0 rounded-full bg-[var(--fill-secondary)] px-3.5 py-2 text-[13px] font-semibold text-[var(--text)] no-underline hover:bg-[var(--separator)]"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
           </div>
         </section>
 
-        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-faq">
+        <section className="border-t border-[var(--separator)] w-full min-w-0" aria-labelledby="home-faq">
           <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
             <h2 id="home-faq" className="font-display text-lg sm:text-xl font-semibold text-[var(--text)] mb-4">
               {t('home.faq_title')}
             </h2>
-            <dl className="space-y-4 max-w-3xl">
+            <dl className="ios-grouped-section max-w-3xl overflow-hidden divide-y divide-[var(--separator)]">
               {homeFaqs.map((faq) => (
-                <div key={faq.question} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5">
-                  <dt className="font-semibold text-[var(--text)] text-sm sm:text-base">{faq.question}</dt>
-                  <dd className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
+                <div key={faq.question} className="bg-[var(--card)] px-4 py-3.5 sm:px-5 sm:py-4">
+                  <dt className="font-semibold text-[var(--text)] text-[15px]">{faq.question}</dt>
+                  <dd className="mt-1.5 text-[14px] text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
                 </div>
               ))}
             </dl>
           </div>
         </section>
 
-        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-sellers-cta">
+        <section className="border-t border-[var(--separator)] w-full min-w-0" aria-labelledby="home-sellers-cta">
           <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 id="home-sellers-cta" className="font-display text-lg sm:text-xl font-semibold text-[var(--text)]">
               {t('home.sellers_cta_title')}
@@ -201,26 +221,61 @@ async function HomeBelowFold() {
           </div>
         </section>
 
-        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-news-block">
+        <section className="border-t border-[var(--separator)] w-full min-w-0" aria-labelledby="home-news-block">
           <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <h2 id="home-news-block" className="font-display text-base sm:text-lg font-semibold text-[var(--text)] mb-3">
+            <h2 id="home-news-block" className="font-display text-base sm:text-lg font-semibold text-[var(--text)] mb-4">
               {t('home.news_block_title')}
             </h2>
-            <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label={t('home.news_block_title')}>
-              <Link href="/news" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('nav.news')}
-              </Link>
-              <Link href="/guides" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('home.seo_link_guides')}
-              </Link>
-              <Link href="/guides/purchase-protection" className="text-sm font-semibold text-[var(--primary)] hover:underline">
-                {t('guides.escrow_short')}
-              </Link>
-            </nav>
+            {latestNews.length > 0 ? (
+              <ul className="ios-grouped-section max-w-3xl overflow-hidden divide-y divide-[var(--separator)]">
+                {latestNews.map((article) => {
+                  const dateLabel = article.publishedAt
+                    ? new Date(article.publishedAt).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : '';
+                  return (
+                    <li key={article.slug} className="min-w-0 bg-[var(--card)] px-4 py-3.5 sm:px-5 sm:py-4">
+                      <Link
+                        href={`/news/${encodeURIComponent(article.slug)}`}
+                        className="text-[15px] font-semibold text-[var(--text)] no-underline hover:text-[var(--primary)]"
+                      >
+                        {article.title}
+                      </Link>
+                      {dateLabel ? (
+                        <p className="text-[12px] text-[var(--text-tertiary)] mt-1">{dateLabel}</p>
+                      ) : null}
+                      {article.summary ? (
+                        <p className="text-[14px] text-[var(--text-muted)] mt-1.5 leading-relaxed line-clamp-2">
+                          {article.summary}
+                        </p>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <nav className="flex flex-wrap gap-2" aria-label={t('home.news_block_title')}>
+                <Link
+                  href="/news"
+                  className="rounded-full bg-[var(--fill-secondary)] px-3.5 py-2 text-[13px] font-semibold text-[var(--text)] no-underline"
+                >
+                  {t('nav.news')}
+                </Link>
+                <Link
+                  href="/guides"
+                  className="rounded-full bg-[var(--fill-secondary)] px-3.5 py-2 text-[13px] font-semibold text-[var(--text)] no-underline"
+                >
+                  {t('home.seo_link_guides')}
+                </Link>
+              </nav>
+            )}
           </div>
         </section>
 
-        <HomeMarketingCollapse summary={`${t('home.for_sellers')} · ${t('home.features_title')}`}>
+        <HomeMarketingCollapse summary={t('home.sellers_cta_title')}>
         <section className="py-6 sm:py-10 md:py-14 px-4 sm:px-6 lg:px-8 w-full min-w-0">
           <div className="section-ux-cap-4xl w-full min-w-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-w-0">

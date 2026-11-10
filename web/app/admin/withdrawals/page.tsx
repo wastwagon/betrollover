@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader, AdminStatTile } from '@/components/admin/AdminPageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import {
@@ -133,7 +134,7 @@ function DetailRow({
   if (value == null || value === '') return null;
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 py-2 border-b border-gray-100 dark:border-gray-700/80 last:border-0">
-      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 shrink-0 sm:w-36">{label}</span>
+      <span className="text-xs font-semibold text-[var(--text-tertiary)] shrink-0 sm:w-36">{label}</span>
       <div className="flex-1 min-w-0 flex items-start gap-2">
         <span className={`text-sm text-gray-900 dark:text-gray-100 break-all ${mono ? 'font-mono text-[13px]' : ''}`}>
           {value}
@@ -166,11 +167,11 @@ function PayoutDetailModal({ w, onClose }: { w: Withdrawal; onClose: () => void 
       onKeyDown={(e) => e.key === 'Escape' && onClose()}
     >
       <div
-        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[var(--separator)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
-          <h2 id="payout-detail-title" className="text-lg font-bold text-gray-900 dark:text-white min-w-0 pr-2">
+        <div className="sticky top-0 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 px-5 py-4 border-b border-[var(--separator)] bg-white/95 dark:bg-gray-900/95 backdrop-blur">
+          <h2 id="payout-detail-title" className="text-lg font-bold text-[var(--text)] min-w-0 pr-2">
             Payout details · Withdrawal #{w.id}
           </h2>
           <button
@@ -230,7 +231,7 @@ function PayoutDetailModal({ w, onClose }: { w: Withdrawal; onClose: () => void 
           {pm && (
             <section>
               <h3 className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">Payout method</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-snug">
+              <p className="text-xs text-[var(--text-tertiary)] mb-2 leading-snug">
                 <strong>Account (masked)</strong> is only a short fingerprint (last digits), not encryption — it matches lists and logs safely.
                 Use <strong>Saved payout details</strong> below for the full phone or account number when you send the transfer.
               </p>
@@ -255,7 +256,7 @@ function PayoutDetailModal({ w, onClose }: { w: Withdrawal; onClose: () => void 
               <h3 className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">
                 Saved payout details
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              <p className="text-xs text-[var(--text-tertiary)] mb-2">
                 Full numbers and addresses from the user&apos;s payout profile (manual / bank / crypto).
               </p>
               {Object.entries(parsed).map(([k, v]) => (
@@ -369,31 +370,19 @@ export default function AdminWithdrawalsPage() {
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
 
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Withdrawals Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Review and process withdrawal requests. Rails: Paystack Mobile Money (if enabled in Settings), or manual Bank / Crypto / MoMo. Crypto is sent off-platform to the saved address — paste the tx hash when you approve. <strong>Reject</strong> records a <strong>Rejected</strong> status (optional reason shown to the user).{' '}
-            <strong>Cancel &amp; refund</strong> records <strong>Cancelled</strong> — use when stopping the payout without a formal rejection (e.g. duplicate request). Both refund the debited amount. Users get email and in-app updates.
-          </p>
-        </div>
+        <AdminPageHeader
+          title="Withdrawals"
+          tagline="Review and process payout requests. Reject or cancel & refund both return the debited amount; users get email and in-app updates."
+        />
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
-            <p className="text-sm opacity-90 mb-1">Total Requests</p>
-            <p className="text-3xl font-bold">{totalCount}</p>
-            <p className="text-xs opacity-70 mt-1">all time</p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
-            <p className="text-sm opacity-90 mb-1">Awaiting action (this page)</p>
-            <p className="text-3xl font-bold">{awaitingActionCount}</p>
-            <p className="text-xs opacity-70 mt-1">pending or processing</p>
-          </div>
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
-            <p className="text-sm opacity-90 mb-1">Amount (this page)</p>
-            <p className="text-3xl font-bold">GHS {totalAmountOnPage.toFixed(2)}</p>
-            <p className="text-xs opacity-70 mt-1">across {withdrawals.length} requests</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3 mb-6">
+          <AdminStatTile label="Total requests" value={totalCount} hint="All time" />
+          <AdminStatTile label="Awaiting action" value={awaitingActionCount} hint="Pending or processing on this page" />
+          <AdminStatTile
+            label="Amount (this page)"
+            value={`GHS ${totalAmountOnPage.toFixed(2)}`}
+            hint={`Across ${withdrawals.length} requests`}
+          />
         </div>
 
         {/* Filters */}
@@ -445,39 +434,39 @@ export default function AdminWithdrawalsPage() {
         )}
 
         {!loading && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="ios-grouped-section overflow-hidden">
             {withdrawals.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-gray-600 dark:text-gray-400 text-lg">No withdrawals found</p>
+                <p className="text-[var(--text-muted)] text-lg">No withdrawals found</p>
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
+                  <table className="min-w-full divide-y divide-[var(--separator)]">
+                    <thead className="bg-[var(--fill-secondary)]/50">
                       <tr>
                         {['ID', 'User', 'Amount', 'Payout Details', 'Status', 'Date', 'Actions'].map((h) => (
-                          <th key={h} className="px-5 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{h}</th>
+                          <th key={h} className="px-5 py-4 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">{h}</th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="divide-y divide-[var(--separator)]">
                       {withdrawals.map((w) => {
                         const action = getAction(w.id);
                         const rowBusy = updatingId === w.id;
                         return (
-                          <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                            <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-400">#{w.id}</td>
+                          <tr key={w.id} className="hover:bg-[var(--fill-secondary)]/40/50 transition-colors">
+                            <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-[var(--text-tertiary)]">#{w.id}</td>
                             <td className="px-5 py-4 text-sm">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-medium text-gray-900 dark:text-white">{w.user?.displayName ?? `User #${w.userId}`}</p>
+                                <p className="font-medium text-[var(--text)]">{w.user?.displayName ?? `User #${w.userId}`}</p>
                                 {w.user?.role === 'tipster' && (
                                   <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100">
                                     Tipster
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">{w.user?.email}</p>
+                              <p className="text-xs text-[var(--text-tertiary)]">{w.user?.email}</p>
                               <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mt-1 tabular-nums">
                                 Wallet: {w.user?.walletCurrency ?? 'GHS'}{' '}
                                 {(w.user?.walletBalance ?? 0).toLocaleString(undefined, {
@@ -514,7 +503,7 @@ export default function AdminWithdrawalsPage() {
                                 </p>
                               )}
                             </td>
-                            <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <td className="px-5 py-4 whitespace-nowrap text-sm text-[var(--text-tertiary)]">
                               {formatDate(w.createdAt)}
                               {w.reference && <p className="text-xs font-mono opacity-60">{w.reference.slice(0, 14)}</p>}
                               {w.updatedAt &&
@@ -541,7 +530,7 @@ export default function AdminWithdrawalsPage() {
                             {/* Inline action cell */}
                             <td className="px-5 py-4 min-w-[180px]">
                               {rowBusy ? (
-                                <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center gap-1">
+                                <span className="text-xs text-[var(--text-tertiary)] inline-flex items-center gap-1">
                                   <span className="inline-block h-3 w-3 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" aria-hidden />
                                   Updating…
                                 </span>
@@ -607,7 +596,7 @@ export default function AdminWithdrawalsPage() {
                                     <button
                                       type="button"
                                       onClick={() => setAction(w.id, { type: 'none' })}
-                                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 dark:text-gray-300 text-xs hover:bg-gray-50 dark:hover:bg-gray-700"
+                                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 dark:text-gray-300 text-xs hover:bg-[var(--fill-secondary)]/40"
                                     >
                                       Back
                                     </button>
@@ -636,7 +625,7 @@ export default function AdminWithdrawalsPage() {
                                     <button
                                       type="button"
                                       onClick={() => setAction(w.id, { type: 'none' })}
-                                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 dark:text-gray-300 text-xs hover:bg-gray-50 dark:hover:bg-gray-700"
+                                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 dark:text-gray-300 text-xs hover:bg-[var(--fill-secondary)]/40"
                                     >
                                       Back
                                     </button>
@@ -652,7 +641,7 @@ export default function AdminWithdrawalsPage() {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="px-6 py-4 border-t border-[var(--separator)] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -661,7 +650,7 @@ export default function AdminWithdrawalsPage() {
                     >
                       Previous
                     </button>
-                    <span className="text-sm text-gray-600 dark:text-gray-400 text-center order-1 sm:order-2">Page {page} of {totalPages}</span>
+                    <span className="text-sm text-[var(--text-muted)] text-center order-1 sm:order-2">Page {page} of {totalPages}</span>
                     <button
                       type="button"
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

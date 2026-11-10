@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5">
+    <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-4 sm:p-5">
       <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">{label}</p>
       <p className="mt-2 text-2xl font-bold text-[var(--text)] tabular-nums">{value}</p>
       {hint ? <p className="mt-2 text-xs text-[var(--text-muted)] leading-relaxed">{hint}</p> : null}
@@ -109,7 +109,7 @@ export default async function TrackRecordPage() {
           />
         </div>
 
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-sm text-[var(--text-muted)] leading-relaxed space-y-4">
+        <article className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-6 sm:p-7 text-sm text-[var(--text-muted)] leading-relaxed space-y-4">
           <p>{t('track_record.body_1')}</p>
           <p>{t('track_record.body_2')}</p>
           <p>{t('track_record.body_3')}</p>

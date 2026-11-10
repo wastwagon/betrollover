@@ -294,7 +294,7 @@ export default function ProfilePage() {
               <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('profile.account')}</h2>
               <div className="flex flex-col sm:flex-row gap-6 mb-6 min-w-0">
                 <div className="flex flex-col items-center gap-2 shrink-0">
-                  <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--border)] flex items-center justify-center border-2 border-[var(--border)]">
+                  <div className="w-24 h-24 rounded-full overflow-hidden bg-[var(--border)] flex items-center justify-center border-2 border-[var(--separator)]">
                     {avatarSrc && !avatarError ? (
                       <Image
                         src={avatarSrc!}
@@ -366,7 +366,7 @@ export default function ProfilePage() {
                   type="checkbox"
                   checked={marketingConsent}
                   onChange={(e) => setMarketingConsent(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-[var(--border)] text-[var(--primary)] focus:ring-[var(--primary)]/30"
+                  className="mt-0.5 h-4 w-4 rounded border-[var(--separator)] text-[var(--primary)] focus:ring-[var(--primary)]/30"
                 />
                 <span className="text-xs text-[var(--text-muted)]">{t('profile.marketing_consent')}</span>
               </label>
@@ -422,7 +422,7 @@ export default function ProfilePage() {
               type="button"
               onClick={logoutAllDevices}
               disabled={logoutAllLoading}
-              className="px-5 py-2.5 rounded-xl font-semibold border border-[var(--border)] bg-[var(--card)] text-[var(--text)] hover:bg-[var(--bg-warm)] disabled:opacity-50 transition-colors"
+              className="px-5 py-2.5 rounded-xl font-semibold border border-[var(--separator)] bg-[var(--card)] text-[var(--text)] hover:bg-[var(--bg-warm)] disabled:opacity-50 transition-colors"
             >
               {logoutAllLoading ? t('profile.logout_all_devices_doing') : t('profile.logout_all_devices_btn')}
             </button>
@@ -437,7 +437,7 @@ export default function ProfilePage() {
                   type="checkbox"
                   checked={deleteConfirm}
                   onChange={(e) => setDeleteConfirm(e.target.checked)}
-                  className="rounded border-[var(--border)]"
+                  className="rounded border-[var(--separator)]"
                 />
                 <span className="text-sm text-[var(--text)] min-w-0 break-words">{t('profile.delete_confirm_checkbox')}</span>
               </label>

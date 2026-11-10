@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { AccaFamilyNav } from '@/components/AccaFamilyNav';
+import { GuideCallout, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { buttonClassName } from '@/components/ui/Button';
 import { useT } from '@/context/LanguageContext';
 import { useAccaGeneratorEnabled } from '@/hooks/useAccaGeneratorEnabled';
@@ -27,55 +28,50 @@ export function AccaGeneratorLanding() {
           />
           <AccaFamilyNav current="build" />
 
-          <div className="mx-auto max-w-3xl space-y-6">
-            <aside
-              className="rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-light)] px-4 py-3.5 text-sm text-[var(--text)]"
-              role="note"
-            >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+          <div className="mx-auto max-w-3xl space-y-4">
+            <GuideCallout>
+              <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--primary)] mb-1">
                 {t('acca.landing_disclaimer_kicker')}
-              </p>
-              <p className="mt-1.5 leading-relaxed">
-                {enabled ? t('acca.landing_disclaimer') : t('acca.disabled_body')}
-              </p>
-            </aside>
+              </span>
+              {enabled ? t('acca.landing_disclaimer') : t('acca.disabled_body')}
+            </GuideCallout>
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 space-y-4">
-              {enabled ? (
-                <>
-                  <h2 className="text-base font-semibold text-[var(--text)]">{t('acca.landing_how')}</h2>
-                  <ol className="list-decimal list-inside space-y-2 text-sm text-[var(--text-muted)]">
+            {enabled ? (
+              <GuideStack>
+                <GuideStep index="1" title={t('acca.landing_how')}>
+                  <ol className="mt-1 space-y-2 list-none p-0">
                     <li>{t('acca.landing_step1')}</li>
                     <li>{t('acca.landing_step2')}</li>
                     <li>{t('acca.landing_step3')}</li>
                     <li>{t('acca.landing_step4')}</li>
                   </ol>
-                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                    <Link href="/login?redirect=/acca-generator" className={buttonClassName({ size: 'lg', className: 'min-h-[48px]' })}>
-                      {t('acca.landing_sign_in')}
-                    </Link>
-                    <Link
-                      href="/register?redirect=/acca-generator"
-                      className={buttonClassName({ variant: 'secondary', size: 'lg', className: 'min-h-[48px]' })}
-                    >
-                      {t('acca.landing_create_account')}
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <h2 className="text-base font-semibold text-[var(--text)]">{t('acca.disabled_title')}</h2>
-              )}
-              <p className="text-center text-xs text-[var(--text-muted)]">
-                {t('acca.landing_already')}{' '}
-                <Link href="/marketplace" className="font-medium text-[var(--primary)] underline underline-offset-2">
-                  {t('nav.marketplace')}
-                </Link>
-                {' · '}
-                <Link href="/rollover" className="font-medium text-[var(--primary)] underline underline-offset-2">
-                  {t('nav.rollover')}
-                </Link>
-              </p>
-            </section>
+                </GuideStep>
+                <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                  <Link href="/login?redirect=/acca-generator" className={buttonClassName({ size: 'lg', className: 'min-h-[48px]' })}>
+                    {t('acca.landing_sign_in')}
+                  </Link>
+                  <Link
+                    href="/register?redirect=/acca-generator"
+                    className={buttonClassName({ variant: 'secondary', size: 'lg', className: 'min-h-[48px]' })}
+                  >
+                    {t('acca.landing_create_account')}
+                  </Link>
+                </div>
+              </GuideStack>
+            ) : (
+              <p className="text-[15px] font-semibold text-[var(--text)] px-1">{t('acca.disabled_title')}</p>
+            )}
+
+            <p className="text-center text-[12px] text-[var(--text-muted)] px-1">
+              {t('acca.landing_already')}{' '}
+              <Link href="/marketplace" className="font-semibold text-[var(--primary)] no-underline hover:underline">
+                {t('nav.marketplace')}
+              </Link>
+              {' · '}
+              <Link href="/rollover" className="font-semibold text-[var(--primary)] no-underline hover:underline">
+                {t('nav.rollover')}
+              </Link>
+            </p>
           </div>
         </div>
       </div>

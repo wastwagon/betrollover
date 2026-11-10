@@ -300,7 +300,7 @@ function CommunityPageInner() {
 
       <main className="section-ux-community-shell w-full min-w-0" style={{ height: 'calc(100vh - 140px)' }}>
         {/* Active users bar - top center */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-[calc(100vw-1rem)] flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--card)] border border-[var(--border)] text-sm text-[var(--text-muted)]">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 max-w-[calc(100vw-1rem)] flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--card)] border border-[var(--separator)] text-sm text-[var(--text-muted)]">
           <span className="w-2 h-2 rounded-full bg-[var(--success)] animate-pulse" aria-hidden />
           {totalOnline !== null ? (
             <span>{totalOnline === 1 ? t('community.users_online', { count: '1' }) : t('community.users_online_plural', { count: String(totalOnline) })}</span>
@@ -356,7 +356,7 @@ function CommunityPageInner() {
           })}
 
           {/* Disclaimer */}
-          <div className="mt-4 p-3 bg-[var(--card)] rounded-lg text-xs text-[var(--text-tertiary)] leading-relaxed border border-[var(--border)]">
+          <div className="mt-4 p-3 bg-[var(--card)] rounded-lg text-xs text-[var(--text-tertiary)] leading-relaxed border border-[var(--separator)]">
             <p className="font-semibold text-[var(--text-muted)] mb-1">{t('community.rules_title')}</p>
             <ul className="space-y-0.5 list-disc list-inside">
               <li>{t('community.rule1')}</li>
@@ -373,7 +373,7 @@ function CommunityPageInner() {
 
         {/* Chat panel + right ad column */}
         <div className="flex-1 flex gap-2 sm:gap-4 min-w-0">
-          <div className="flex-1 flex flex-col bg-[var(--card)] rounded-xl overflow-hidden border border-[var(--border)] min-w-0">
+          <div className="flex-1 flex flex-col bg-[var(--card)] rounded-xl overflow-hidden border border-[var(--separator)] min-w-0">
 
           {/* Room header */}
           <div className="px-3 sm:px-4 py-3 border-b border-[var(--separator)] flex items-center gap-2 min-w-0">
@@ -401,7 +401,7 @@ function CommunityPageInner() {
                 className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                   activeSlug === room.slug
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] border-[var(--border)]'
+                    : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] border-[var(--separator)]'
                 }`}
               >
                 <span aria-hidden>{room.icon}</span>
@@ -467,7 +467,7 @@ function CommunityPageInner() {
                             className={`text-sm px-2 py-0.5 rounded-full border transition-colors ${
                               count > 0
                                 ? 'border-[var(--primary)] bg-[var(--primary-light)] text-[var(--text)]'
-                                : 'border-[var(--border)] text-[var(--text-tertiary)] hover:border-[var(--text-muted)]'
+                                : 'border-[var(--separator)] text-[var(--text-tertiary)] hover:border-[var(--text-muted)]'
                             }`}
                           >
                             {emoji}{count > 0 && <span className="ml-1 text-xs">{count}</span>}

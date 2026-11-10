@@ -125,7 +125,7 @@ export default function NotificationsPage() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0 min-w-0">
                 <Link
                   href="/profile#notification-preferences"
-                  className="w-full sm:w-auto px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors text-center"
+                  className="w-full sm:w-auto px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors text-center"
                 >
                   {t('notifications.manage_settings')}
                 </Link>
@@ -144,7 +144,7 @@ export default function NotificationsPage() {
                     type="button"
                     onClick={markAllRead}
                     disabled={markingAll}
-                    className="w-full sm:w-auto px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors disabled:opacity-50"
+                    className="w-full sm:w-auto px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors disabled:opacity-50"
                   >
                     {markingAll ? t('notifications.marking') : t('notifications.mark_all_read')}
                   </button>
@@ -153,7 +153,7 @@ export default function NotificationsPage() {
             </div>
 
             {items.length === 0 ? (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+              <div className="ios-grouped-section">
                 <EmptyState
                   title={t('notifications.all_clear')}
                   description={t('notifications.all_clear_desc')}
@@ -162,12 +162,12 @@ export default function NotificationsPage() {
                 />
               </div>
             ) : displayed.length === 0 ? (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+              <div className="ios-grouped-section">
                 <EmptyState
                   title={t('notifications.no_unread')}
                   description={t('notifications.caught_up')}
                   actionLabel={t('notifications.show_all')}
-                  actionHref="#"
+                  onActionClick={() => setFilter('all')}
                 />
               </div>
             ) : (

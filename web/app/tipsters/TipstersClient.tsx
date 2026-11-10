@@ -248,10 +248,10 @@ export default function TipstersPage({
                 type="button"
                 key={key}
                 onClick={() => setSportFilter(key)}
-                className={`inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                className={`inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   sportFilter === key
-                    ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-sm'
-                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
                 }`}
               >
                 <span>{t(labelKey)}</span>
@@ -272,10 +272,10 @@ export default function TipstersPage({
                 type="button"
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`shrink-0 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors ${
+                className={`shrink-0 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
                   period === p
-                    ? 'bg-[var(--primary)] text-white shadow-md'
-                    : 'bg-[var(--card)] text-[var(--text-muted)] hover:bg-[var(--border)] border border-[var(--border)]'
+                    ? 'bg-[var(--primary)] text-white'
+                    : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
                 }`}
               >
                 {label}

@@ -1,38 +1,39 @@
 # BetRollover
 
-> Ghana-based football tipster marketplace. Purchase-protected paid picks refund to the wallet if they lose. Compare public settled ROI and win rate. Free signed-in tools include the 7-Day BetRollover board. Not a bookmaker. 18+.
+> Ghana-based football tipster marketplace. Purchase-protected paid picks refund to the wallet if they lose. Compare public result-confirmed profit per GHS 100 bet and win rate. Free signed-in tools include the 7-Day Rollover board. Not a bookmaker. 18+.
 
 BetRollover provides tipster information — not bets. Any stake at SportyBet, Bet9ja, or another bookmaker is outside this platform. Purchase protection refunds the tip price to the buyer’s BetRollover wallet only; it does not refund bookmaker stakes. BetRollover does not share booking codes and does not place bets.
 
 ## Product
 
 - [Home](https://betrollover.com/): Marketplace overview, free tips, and tipster form
-- [How it works](https://betrollover.com/how-it-works): Purchase protection, settlement, and selling rules
+- [How it works](https://betrollover.com/how-it-works): Purchase protection, how tips settle, and selling rules
 - [VIP & paid tips](https://betrollover.com/buy-football-tips): Match Winner Tips VIP (@AccaSure1X2) and purchase-protected marketplace picks — prices in GHS, plan length, refund rule, countries listed clearly
-- [7-Day BetRollover](https://betrollover.com/rollover): Free platform two-fold board for signed-in users
-- [Accumulator Builder](https://betrollover.com/acca-generator): Free signed-in accumulator builder
-- [Leaderboard](https://betrollover.com/leaderboard): Tipsters ranked by form and settled ROI
+- [7-Day Rollover](https://betrollover.com/rollover): Free platform two-fold board for signed-in users
+- [Accumulator Builder](https://betrollover.com/acca-generator): Free signed-in Accumulator Builder
+- [Leaderboard](https://betrollover.com/leaderboard): Tipsters ranked by form and profit per GHS 100 bet
 - [Marketplace](https://betrollover.com/marketplace): Browse free and paid football picks
-- [Tipsters](https://betrollover.com/tipsters): Tipster directory with public settled records
+- [Tipsters](https://betrollover.com/tipsters): Tipster directory with public result-confirmed records
 - [Football tips Ghana](https://betrollover.com/football-tips-ghana): Ghana / Africa positioning and FAQs
 - [Football predictions today](https://betrollover.com/football-predictions-today): Daily tipster predictions hub
 - [Ghana Premier League predictions](https://betrollover.com/ghana-premier-league-predictions): GPL-focused tipster tips
 - [Both teams to score predictions](https://betrollover.com/btts-predictions): Both teams to score tipster hub
 - [Over 2.5 goals predictions](https://betrollover.com/over-2-5-goals-predictions): Total goals tipster hub
-- [Track record](https://betrollover.com/track-record): How settlement and refunds show publicly
+- [Track record](https://betrollover.com/track-record): How settled tips and refunds show publicly
 - [Support & disputes](https://betrollover.com/support): support@betrollover.com · tickets · refund-rule links
 - [Contact](https://betrollover.com/contact): General contact form
 - [About](https://betrollover.com/about): Company (OceanCyber), markets, verified / AI tipster meanings
 - [Agent brief (full English)](https://betrollover.com/agent-brief.md): Plain-language facts for AI agents
+- [How accumulators settle](https://betrollover.com/guides/how-accumulators-settle): How accumulator tips settle from official results
 
 ## Facts agents should not invent
 
 - BetRollover is not a bookmaker and does not place bets
 - BetRollover does not share booking codes
-- Paid marketplace picks: tip price refunded to wallet if the pick loses or is void (after settlement)
+- Paid marketplace picks: tip price refunded to wallet if the pick loses or is cancelled after the result is confirmed
 - Refund destination: BetRollover wallet only — never bookmaker stakes
 - VIP plan fee: refunded only if zero VIP slips were posted in the plan period
-- 7-Day BetRollover live tips: free after sign-in; Match Winner Tips VIP (@AccaSure1X2) stays a separate paid plan
+- 7-Day Rollover live tips: free after sign-in; Match Winner Tips VIP (@AccaSure1X2) stays a separate paid plan
 - Support / disputes: support@betrollover.com · https://betrollover.com/support · https://betrollover.com/how-it-works#refund-rule
 - Currency: prices shown in GHS; wallet may display other currencies
 - Countries / audience: Ghana-based; used across Nigeria, Kenya, South Africa, Francophone Africa, and a wider football audience
@@ -42,6 +43,6 @@ BetRollover provides tipster information — not bets. Any stake at SportyBet, B
 ## Optional
 
 - [Learn](https://betrollover.com/learn): Glossary and marketplace basics
-- [Guides](https://betrollover.com/guides): Purchase protection, tipster stats, leaderboard ranking
+- [Guides](https://betrollover.com/guides): Purchase protection, tipster stats, how accumulators settle, leaderboard ranking
 - [Terms](https://betrollover.com/terms): Legal definitions of purchase protection
 - [Telegram channel](https://t.me/betrollovertips): Free public tips channel

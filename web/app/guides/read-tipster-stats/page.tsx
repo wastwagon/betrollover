@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { GuideFaqList, GuidePanel, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 
@@ -49,41 +50,30 @@ export default async function ReadTipsterStatsGuidePage() {
         />
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="stats" />
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.stats_intro')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.stats_roi_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.stats_roi_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.stats_win_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.stats_win_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.stats_streak_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.stats_streak_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.stats_where_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.stats_where_before')}{' '}
-            <Link href="/tipsters" className="text-[var(--primary)] hover:underline">
-              {t('guides.eval_profiles')}
-            </Link>{' '}
-            {t('guides.stats_where_mid')}{' '}
-            <Link href="/coupons/archive" className="text-[var(--primary)] hover:underline">
-              {t('guides.eval_archive')}
-            </Link>{' '}
-            {t('guides.stats_where_after')}
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('how_it_works.faq_title')}</h2>
-          <dl className="mt-3 space-y-4">
-            {faqs.map((faq) => (
-              <div key={faq.question}>
-                <dt className="text-sm font-semibold">{faq.question}</dt>
-                <dd className="mt-1 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
+        <GuideStack>
+          <GuidePanel>
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">{t('guides.stats_intro')}</p>
+          </GuidePanel>
+          <GuideStep index="1" title={t('guides.stats_roi_h')}>
+            <p>{t('guides.stats_roi_body')}</p>
+          </GuideStep>
+          <GuideStep index="2" title={t('guides.stats_win_h')}>
+            <p>{t('guides.stats_win_body')}</p>
+          </GuideStep>
+          <GuideStep index="3" title={t('guides.stats_streak_h')}>
+            <p>{t('guides.stats_streak_body')}</p>
+          </GuideStep>
+          <GuideStep index="4" title={t('guides.stats_where_h')}>
+            <p>
+              {t('guides.stats_where_before')}{' '}
+              <Link href="/tipsters">{t('guides.eval_profiles')}</Link>{' '}
+              {t('guides.stats_where_mid')}{' '}
+              <Link href="/coupons/archive">{t('guides.eval_archive')}</Link>{' '}
+              {t('guides.stats_where_after')}
+            </p>
+          </GuideStep>
+          <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+        </GuideStack>
       </main>
       <AppFooter />
     </div>

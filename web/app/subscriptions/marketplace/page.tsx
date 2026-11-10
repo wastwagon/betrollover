@@ -181,12 +181,12 @@ export default function SubscriptionMarketplacePage() {
               return (
       <article
         key={pkg.id}
-        className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden flex flex-col w-full min-w-0 max-w-full hover:shadow-md transition-shadow duration-200 ease-out"
+        className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] overflow-hidden flex flex-col w-full min-w-0 max-w-full hover:shadow-md transition-shadow duration-200 ease-out"
       >
                   <div className="p-4 sm:p-5 flex flex-col flex-1 min-w-0">
                     <div className="flex items-start gap-3 mb-3 min-w-0">
                       <Link href={tip ? `/tipsters/${tip.username}` : '#'} className="shrink-0">
-                        <div className="w-14 h-14 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--border)]">
+                        <div className="w-14 h-14 rounded-full overflow-hidden bg-[var(--bg)] border border-[var(--separator)]">
                           {tip?.avatarUrl ? (
                             <Image
                               src={getAvatarUrl(tip.avatarUrl, 56)!}
@@ -219,7 +219,7 @@ export default function SubscriptionMarketplacePage() {
                       <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-3">{tip.bio}</p>
                     )}
 
-                    <div className="rounded-xl bg-[var(--bg-warm)]/80 border border-[var(--border)]/60 p-3 mb-3">
+                    <div className="rounded-xl bg-[var(--bg-warm)]/80 border border-[var(--separator)]/60 p-3 mb-3">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2">
                         {t('subscriptions.performance_heading')}
                       </p>
@@ -248,7 +248,7 @@ export default function SubscriptionMarketplacePage() {
                       </div>
                     </div>
 
-                    <div className="border-t border-[var(--border)] pt-3 mt-auto">
+                    <div className="border-t border-[var(--separator)] pt-3 mt-auto">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h3 className="font-semibold text-[var(--text)] text-sm">{pkg.name}</h3>
                         <VipPackageChannelBadge channel={pkg.channel} />
@@ -268,13 +268,13 @@ export default function SubscriptionMarketplacePage() {
                       </p>
                       {!meResolved ? (
                         <div
-                          className="mt-3 w-full h-10 rounded-xl bg-[var(--card)] border border-[var(--border)] animate-pulse"
+                          className="mt-3 w-full h-10 rounded-xl bg-[var(--card)] border border-[var(--separator)] animate-pulse"
                           aria-hidden
                         />
                       ) : alreadySubscribed ? (
                         <div className="mt-3 space-y-2">
                           <div
-                            className="w-full inline-flex items-center justify-center py-2.5 rounded-xl font-semibold text-sm bg-[var(--text-muted)]/15 text-[var(--text-muted)] border border-[var(--border)] cursor-default select-none"
+                            className="w-full inline-flex items-center justify-center py-2.5 rounded-xl font-semibold text-sm bg-[var(--text-muted)]/15 text-[var(--text-muted)] border border-[var(--separator)] cursor-default select-none"
                             role="status"
                             aria-label={t('tipster.subscribed')}
                           >
@@ -315,25 +315,25 @@ export default function SubscriptionMarketplacePage() {
         <div className="mt-4 flex flex-wrap justify-center gap-2 sm:gap-3 text-sm max-w-2xl mx-auto px-1">
           <Link
             href="/tipsters"
-            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
           >
             {t('nav.tipsters')}
           </Link>
           <Link
             href="/how-it-works#faq"
-            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
           >
             {t('home.how_it_works')}
           </Link>
           <Link
             href="/guides/purchase-protection"
-            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
           >
             {t('subscriptions.marketplace_link_escrow')}
           </Link>
           <Link
             href="/guides/evaluate-tipsters"
-            className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+            className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
           >
             {t('subscriptions.marketplace_link_eval')}
           </Link>

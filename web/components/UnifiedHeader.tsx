@@ -203,7 +203,7 @@ function DesktopMenuPortal({
         id={panelId}
         role="region"
         aria-labelledby={labelledBy}
-        className={`w-full ${maxHeightClass} overflow-y-auto overscroll-contain rounded-xl bg-[var(--card)] border border-[var(--border)]`}
+        className={`w-full ${maxHeightClass} overflow-y-auto overscroll-contain rounded-xl bg-[var(--card)] border border-[var(--separator)]`}
       >
         {children}
       </div>
@@ -498,7 +498,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                       )}
                       <CompactNavLink href="/create-pick" icon={<IconTarget />} label={t('nav.create_pick')} onClick={closeAll} />
                       {accaEnabled ? (
-                        <CompactNavLink href="/acca-generator" icon={<IconAcca />} label={t('nav.acca_generator')} onClick={closeAll} />
+                        <CompactNavLink href="/acca-generator" icon={<IconAcca />} label={t('nav.acca_generator_short')} onClick={closeAll} />
                       ) : null}
                       {isHumanVipPackagesEnabled() ? (
                         <CompactNavLink
@@ -610,7 +610,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                   })}
                 >
                   <IconAcca className="w-4 h-4" />
-                  {t('nav.acca_generator')}
+                  {t('nav.acca_generator_short')}
                 </Link>
               ) : null}
             </nav>
@@ -860,7 +860,7 @@ export function UnifiedHeader({ slipCount }: UnifiedHeaderProps) {
                 className={`shrink-0 snap-start inline-flex items-center min-h-[44px] px-3 rounded-full text-[11px] font-semibold border transition-colors touch-manipulation ${
                   isActive(pathname, q.href)
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--separator)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
                 }`}
               >
                 {q.label}

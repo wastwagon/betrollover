@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { GuideFaqList, GuidePanel, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import { metaKeywordsFromTranslation } from '@/lib/seo/meta-keywords';
@@ -54,57 +55,40 @@ export default async function GhanaFreeTipsVsProtectedGuidePage() {
         />
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="ghana_vs" />
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.ghana_vs_intro')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.ghana_vs_free_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.ghana_vs_free_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.ghana_vs_affiliate_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.ghana_vs_affiliate_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.ghana_vs_protected_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.ghana_vs_protected_body')}{' '}
-            <Link href="/guides/purchase-protection" className="text-[var(--primary)] hover:underline">
-              {t('guides.escrow_short')}
-            </Link>
-            {' · '}
-            <Link href="/track-record" className="text-[var(--primary)] hover:underline">
-              {t('track_record.nav')}
-            </Link>
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.ghana_vs_record_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.ghana_vs_record_body')}{' '}
-            <Link href="/coupons/archive" className="text-[var(--primary)] hover:underline">
-              {t('header.settled_archive')}
-            </Link>
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.ghana_vs_choose_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.ghana_vs_choose_body')}{' '}
-            <Link href="/football-tips-ghana" className="text-[var(--primary)] hover:underline">
-              {t('footer.ghana_hub')}
-            </Link>
-            {' · '}
-            <Link href="/marketplace" className="text-[var(--primary)] hover:underline">
-              {t('nav.marketplace')}
-            </Link>
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('how_it_works.faq_title')}</h2>
-          <dl className="mt-3 space-y-4">
-            {faqs.map((faq) => (
-              <div key={faq.question}>
-                <dt className="text-sm font-semibold">{faq.question}</dt>
-                <dd className="mt-1 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
+        <GuideStack>
+          <GuidePanel>
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">{t('guides.ghana_vs_intro')}</p>
+          </GuidePanel>
+          <GuideStep index="1" title={t('guides.ghana_vs_free_h')}>
+            <p>{t('guides.ghana_vs_free_body')}</p>
+          </GuideStep>
+          <GuideStep index="2" title={t('guides.ghana_vs_affiliate_h')}>
+            <p>{t('guides.ghana_vs_affiliate_body')}</p>
+          </GuideStep>
+          <GuideStep index="3" title={t('guides.ghana_vs_protected_h')}>
+            <p>
+              {t('guides.ghana_vs_protected_body')}{' '}
+              <Link href="/guides/purchase-protection">{t('guides.escrow_short')}</Link>
+              {' · '}
+              <Link href="/track-record">{t('track_record.nav')}</Link>
+            </p>
+          </GuideStep>
+          <GuideStep index="4" title={t('guides.ghana_vs_record_h')}>
+            <p>
+              {t('guides.ghana_vs_record_body')}{' '}
+              <Link href="/coupons/archive">{t('header.settled_archive')}</Link>
+            </p>
+          </GuideStep>
+          <GuideStep index="5" title={t('guides.ghana_vs_choose_h')}>
+            <p>
+              {t('guides.ghana_vs_choose_body')}{' '}
+              <Link href="/football-tips-ghana">{t('footer.ghana_hub')}</Link>
+              {' · '}
+              <Link href="/marketplace">{t('nav.marketplace')}</Link>
+            </p>
+          </GuideStep>
+          <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+        </GuideStack>
       </main>
       <AppFooter />
     </div>

@@ -47,7 +47,7 @@ const LOCALISED_PAGES: Array<{
   { path: '/guides/ghana-free-tips-vs-protected', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/guides/evaluate-tipsters', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/guides/read-tipster-stats', changeFrequency: 'monthly', priority: 0.6 },
-  { path: '/guides/accumulator-settlement', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/guides/how-accumulators-settle', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/guides/free-and-paid-picks', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/guides/leaderboard-ranking', changeFrequency: 'monthly', priority: 0.65 },
   { path: '/about',                  changeFrequency: 'monthly', priority: 0.6  },

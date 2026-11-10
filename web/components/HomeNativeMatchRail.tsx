@@ -130,7 +130,7 @@ export function HomeNativeMatchRail({
           return (
             <article
               key={m.id}
-              className="w-[min(72vw,240px)] sm:w-[220px] shrink-0 snap-start rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-sm overflow-hidden"
+              className="w-[min(72vw,240px)] sm:w-[220px] shrink-0 snap-start rounded-xl border border-[var(--separator)] bg-[var(--card)] shadow-sm overflow-hidden"
             >
               <div className="px-2.5 pt-2 pb-1.5">
                 <div className="flex items-center justify-between gap-1.5 min-w-0">
@@ -200,23 +200,16 @@ export function HomeNativeMatchRail({
               <div className="flex border-t border-[var(--separator)]">
                 <Link
                   href={`/matches/${m.id}`}
-                  className="flex min-h-[34px] flex-1 items-center justify-center border-r border-[var(--separator)] px-1 text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)] text-center leading-snug"
+                  className="flex min-h-[34px] flex-1 items-center justify-center px-1 text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)] text-center leading-snug"
                 >
-                  {t('home.today_matches_prediction_link', {
-                    home: m.homeTeamName,
-                    away: m.awayTeamName,
-                  })}
-                </Link>
-                <Link
-                  href={`/matches/${m.id}`}
-                  className="flex min-h-[34px] flex-1 items-center justify-center px-1 text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)] text-center"
-                >
-                  {picks > 0
-                    ? t('home.today_matches_picks', { count: String(picks) })
-                    : t('home.today_matches_prediction_link', {
-                        home: m.homeTeamName,
-                        away: m.awayTeamName,
-                      })}
+                  {picks === 1
+                    ? t('home.today_matches_picks_one')
+                    : picks > 1
+                      ? t('home.today_matches_picks', { count: String(picks) })
+                      : t('home.today_matches_prediction_link', {
+                          home: m.homeTeamName,
+                          away: m.awayTeamName,
+                        })}
                 </Link>
               </div>
             </article>

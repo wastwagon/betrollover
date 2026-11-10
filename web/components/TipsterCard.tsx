@@ -73,7 +73,7 @@ export function TipsterCard({
   const roiDisplay = hasSettledPicks
     ? t('pick_card.roi_short', { roi: Number(tipster.roi).toFixed(2) })
     : '—';
-  const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(0)}%` : '—';
+  const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(2)}%` : '—';
   const roiPositive = tipster.roi > 0;
   const roiNegative = tipster.roi < 0;
   const premium = variant === 'premium';
@@ -82,7 +82,7 @@ export function TipsterCard({
     <article
       className={`overflow-hidden flex flex-col w-full min-w-0 max-w-full transition-all duration-200 ease-out ${
         premium
-          ? 'rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-md hover:shadow-lg'
+          ? 'rounded-2xl border border-[var(--separator)] bg-[var(--card)]'
           : 'rounded-[var(--radius-ios-group)] bg-[var(--card)] border border-[var(--separator)]'
       } ${className}`}
     >
@@ -90,10 +90,8 @@ export function TipsterCard({
         <div className={`flex items-start min-w-0 ${premium ? 'mb-2 gap-2' : 'mb-3 gap-3'}`}>
           <Link href={`/tipsters/${tipster.username}`} className="shrink-0 touch-target">
             <div
-              className={`rounded-full overflow-hidden bg-[var(--fill-secondary)] border ${
-                premium
-                  ? 'h-7 w-7 border-[var(--border)]'
-                  : 'w-11 h-11 border-[var(--separator)]'
+              className={`rounded-full overflow-hidden bg-[var(--fill-secondary)] border border-[var(--separator)] ${
+                premium ? 'h-7 w-7' : 'w-11 h-11'
               }`}
             >
               {showAvatar ? (

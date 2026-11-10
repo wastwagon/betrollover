@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { GuideFaqList, GuidePanel, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import {
@@ -65,41 +66,30 @@ export default async function LeaderboardRankingGuidePage() {
         />
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="board" />
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.board_intro')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.board_who_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.board_who_body', vars)}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.board_order_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.board_order_body', vars)}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.board_period_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.board_period_body', vars)}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.board_check_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.board_check_before')}{' '}
-            <Link href="/leaderboard" className="text-[var(--primary)] hover:underline">
-              {t('nav.leaderboard')}
-            </Link>{' '}
-            {t('guides.board_check_mid')}{' '}
-            <Link href="/coupons/archive" className="text-[var(--primary)] hover:underline">
-              {t('guides.eval_archive')}
-            </Link>{' '}
-            {t('guides.board_check_after')}
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('how_it_works.faq_title')}</h2>
-          <dl className="mt-3 space-y-4">
-            {faqs.map((faq) => (
-              <div key={faq.question}>
-                <dt className="text-sm font-semibold">{faq.question}</dt>
-                <dd className="mt-1 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
+        <GuideStack>
+          <GuidePanel>
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">{t('guides.board_intro')}</p>
+          </GuidePanel>
+          <GuideStep index="1" title={t('guides.board_who_h')}>
+            <p>{t('guides.board_who_body', vars)}</p>
+          </GuideStep>
+          <GuideStep index="2" title={t('guides.board_order_h')}>
+            <p>{t('guides.board_order_body', vars)}</p>
+          </GuideStep>
+          <GuideStep index="3" title={t('guides.board_period_h')}>
+            <p>{t('guides.board_period_body', vars)}</p>
+          </GuideStep>
+          <GuideStep index="4" title={t('guides.board_check_h')}>
+            <p>
+              {t('guides.board_check_before')}{' '}
+              <Link href="/leaderboard">{t('nav.leaderboard')}</Link>{' '}
+              {t('guides.board_check_mid')}{' '}
+              <Link href="/coupons/archive">{t('guides.eval_archive')}</Link>{' '}
+              {t('guides.board_check_after')}
+            </p>
+          </GuideStep>
+          <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+        </GuideStack>
       </main>
       <AppFooter />
     </div>

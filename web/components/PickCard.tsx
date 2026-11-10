@@ -27,7 +27,7 @@ import { Button, buttonClassName } from '@/components/ui/Button';
 import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { accaDeskBoardBadge } from '@/lib/acca-desk-board-badge';
 import { resultChipClass } from '@/lib/result-chip';
-import { isAccaDeskTipsterType, isVipRosterUsername } from '@/lib/tipster-kind';
+import { isAccaDeskTipsterType } from '@/lib/tipster-kind';
 
 interface Pick {
   id?: number;
@@ -73,18 +73,22 @@ interface Tipster {
   rank: number | null;
 }
 
-const SPORT_META: Record<string, { icon: string; label: string; color: string }> = {
-  football:          { icon: '⚽', label: 'Football',          color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  basketball:        { icon: '🏀', label: 'Basketball',        color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  rugby:             { icon: '🏉', label: 'Rugby',             color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  mma:               { icon: '🥊', label: 'MMA',               color: 'bg-red-100 text-red-800 border-red-200' },
-  volleyball:        { icon: '🏐', label: 'Volleyball',        color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  hockey:            { icon: '🏒', label: 'Hockey',            color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
-  american_football: { icon: '🏈', label: 'Amer. Football',   color: 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25' },
-  tennis:            { icon: '🎾', label: 'Tennis',            color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  'multi-sport':     { icon: '🌍', label: 'Multi-Sport',       color: 'bg-teal-100 text-teal-800 border-teal-200' },
-  multi:             { icon: '🌍', label: 'Multi-Sport',       color: 'bg-teal-100 text-teal-800 border-teal-200' },
+/** Quiet, token-based sport labels — no emoji rainbow chips. */
+const SPORT_META: Record<string, { label: string }> = {
+  football: { label: 'Football' },
+  basketball: { label: 'Basketball' },
+  rugby: { label: 'Rugby' },
+  mma: { label: 'MMA' },
+  volleyball: { label: 'Volleyball' },
+  hockey: { label: 'Hockey' },
+  american_football: { label: 'Amer. Football' },
+  tennis: { label: 'Tennis' },
+  'multi-sport': { label: 'Multi-Sport' },
+  multi: { label: 'Multi-Sport' },
 };
+
+const SPORT_CHIP =
+  'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--fill-secondary)] text-[var(--text-muted)] border border-[var(--separator)]';
 
 interface PickCardProps {
   id: number;
@@ -243,8 +247,7 @@ export function PickCard({
   const isAutomatedTipster = !!(
     tipster?.isAi ||
     tipster?.is_ai ||
-    isAccaDeskTipsterType(tipsterType) ||
-    isVipRosterUsername(tipster?.username)
+    isAccaDeskTipsterType(tipsterType)
   );
 
   const picksN = tipster?.totalPicks ?? totalPicks;
@@ -256,7 +259,7 @@ export function PickCard({
   const viewAway = (firstLeg?.awayTeamName || '').trim();
   const viewPredictionLabel =
     picks.length > 1
-      ? t('pick_card.view_multi')
+      ? t('pick_card.view_multi', { title: displayTitle })
       : viewHome && viewAway
         ? t('pick_card.view_match', { home: viewHome, away: viewAway })
         : t('pick_card.view_details');
@@ -287,13 +290,13 @@ export function PickCard({
   return (
     <>
       <article
-        className={`card-gradient rounded-[var(--radius)] shadow-card overflow-hidden hover:border-[var(--primary)]/30 transition-colors duration-200 flex flex-col relative border border-[var(--border)] ${className}`}
+        className={`card-gradient rounded-[var(--radius-lg,1rem)] overflow-hidden hover:border-[var(--primary)]/25 transition-colors duration-200 flex flex-col relative border border-[var(--separator)] bg-[var(--card)] ${className}`}
       >
         {/* Top-right: Acca Desk Today / Tomorrow only (follow lives on tipster cards) */}
         {deskBoard ? (
-          <div className="absolute top-1.5 right-1.5 z-10">
+          <div className="absolute top-2.5 right-2.5 z-10">
             <span
-              className="flex-shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded bg-[var(--primary)] text-white"
+              className="flex-shrink-0 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--primary)] text-white"
               title={
                 deskBoard === 'tomorrow'
                   ? t('pick_card.desk_tomorrow_title')
@@ -304,54 +307,54 @@ export function PickCard({
             </span>
           </div>
         ) : null}
-        <div className="p-3 flex flex-col flex-1">
+        <div className="p-3.5 sm:p-4 flex flex-col flex-1">
           {/* Tipster Performance Header - compact */}
           {(tipster || title) && (
-            <div className={`mb-2 pb-2 border-b border-[var(--border)]/80 ${deskBoard ? 'pr-16' : ''}`}>
-              <div className="flex items-center gap-2">
+            <div className={`mb-2.5 pb-2.5 border-b border-[var(--separator)] ${deskBoard ? 'pr-16' : ''}`}>
+              <div className="flex items-center gap-2.5">
                 {tipster?.avatarUrl && !avatarError ? (
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden bg-[var(--border)] relative">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-[var(--fill-secondary)] relative">
                     <Image
-                      src={getAvatarUrl(tipster.avatarUrl, 28)!}
+                      src={getAvatarUrl(tipster.avatarUrl, 32)!}
                       alt={tipster.displayName}
-                      width={28}
-                      height={28}
+                      width={32}
+                      height={32}
                       className="w-full h-full object-cover"
-                      unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(tipster.avatarUrl, 28))}
+                      unoptimized={shouldUnoptimizeGoogleAvatar(getAvatarUrl(tipster.avatarUrl, 32))}
                       onError={() => setAvatarError(true)}
                     />
                   </div>
                 ) : (
-                  <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold ${tipster ? tipsterRankBadgeClass(tipster.rank) : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold ${tipster ? tipsterRankBadgeClass(tipster.rank) : 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}>
                     {tipster ? tipsterRankBadgeContent(tipster.rank) : '?'}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <p className="font-medium text-xs text-[var(--text)] truncate min-w-0" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
+                    <p className="font-semibold text-[13px] leading-tight text-[var(--text)] truncate min-w-0" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
                       {tipster?.displayName || t('pick_card.tipster')}
                     </p>
                     {isAutomatedTipster ? <AiTipsterBadge className="shrink-0 scale-90 origin-left" tipsterType={tipsterType} /> : null}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0 mt-0 min-w-0">
-                    <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 min-w-0">
+                    <span className="text-[11px] text-[var(--text-muted)] tabular-nums">
                       {picksCountLabel}
                     </span>
                     <span
-                      className="text-[9px] font-bold text-[var(--success)] tabular-nums"
+                      className="text-[11px] font-semibold text-[var(--success)] tabular-nums"
                       title={
                         tipster?.winRate != null
-                          ? t('pick_card.win_rate', { rate: Number(tipster.winRate).toFixed(0) })
+                          ? t('pick_card.win_rate', { rate: Number(tipster.winRate).toFixed(2) })
                           : undefined
                       }
                     >
                       {tipster?.winRate != null
-                        ? t('pick_card.win_rate', { rate: Number(tipster.winRate).toFixed(0) })
+                        ? t('pick_card.win_rate', { rate: Number(tipster.winRate).toFixed(2) })
                         : '—'}
                     </span>
                     {tipster?.roi != null && (
                       <span
-                        className={`text-[9px] font-bold tabular-nums ${
+                        className={`text-[11px] font-semibold tabular-nums ${
                           Number(tipster.roi) > 0
                             ? 'text-[var(--success)]'
                             : Number(tipster.roi) < 0
@@ -367,7 +370,7 @@ export function PickCard({
                       tipster.wonPicks + tipster.lostPicks > 0 &&
                       tipster.wonPicks + tipster.lostPicks < LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING && (
                       <span
-                        className="text-[9px] font-semibold text-[var(--text-muted)]"
+                        className="text-[11px] font-medium text-[var(--text-muted)]"
                         title={t('tipster.early_sample_hint', {
                           n: String(LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING),
                         })}
@@ -380,10 +383,14 @@ export function PickCard({
                 <div className="flex-shrink-0 flex items-center gap-1">
                   {avgRating != null && avgRating > 0 && (
                     <span className="flex items-center gap-0.5">
-                      <span className="text-[var(--accent)] text-[10px]">★</span>
-                      <span className="text-[9px] font-semibold text-[var(--accent)]">{Number(avgRating).toFixed(1)}</span>
+                      <span className="text-[var(--accent)] text-[12px]" aria-hidden>
+                        ★
+                      </span>
+                      <span className="text-[11px] font-semibold text-[var(--accent)] tabular-nums">
+                        {Number(avgRating).toFixed(1)}
+                      </span>
                       {reviewCount != null && reviewCount > 0 && (
-                        <span className="text-[9px] text-[var(--text-muted)]">({reviewCount})</span>
+                        <span className="text-[11px] text-[var(--text-muted)]">({reviewCount})</span>
                       )}
                     </span>
                   )}
@@ -393,67 +400,58 @@ export function PickCard({
           )}
 
           {/* Coupon title & summary */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between gap-2 flex-wrap min-h-[1.875rem] min-w-0">
+          <div className="mb-2.5">
+            <div className="flex items-start justify-between gap-2 min-w-0">
               {displayTitle ? (
-                <span
-                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[var(--primary)]/10 border border-[var(--primary)]/25 text-[var(--text)] font-medium text-xs truncate max-w-full min-w-0 flex-1"
+                <h3
+                  className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-[var(--text)] line-clamp-2"
                   title={displayTitle}
                 >
-                  <span className="flex-shrink-0 text-[var(--primary)] opacity-80" aria-hidden>#</span>
-                  <span className="truncate">{displayTitle}</span>
-                </span>
+                  {displayTitle}
+                </h3>
               ) : (
-                <span
-                  className="flex-1 min-w-0 inline-flex items-center px-2 py-1 rounded-lg border border-transparent text-xs"
-                  aria-hidden
-                />
+                <span className="flex-1 min-w-0" aria-hidden />
               )}
-              <span className="text-[10px] text-[var(--text-muted)] whitespace-nowrap flex-shrink-0">
+              <span className="text-[12px] text-[var(--text-muted)] whitespace-nowrap flex-shrink-0 tabular-nums pt-0.5">
                 {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
               </span>
             </div>
-            <KickoffUrgencyLine picks={picks} compact className="mt-1" />
-            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+            <KickoffUrgencyLine picks={picks} compact className="mt-1.5" />
+            <div className="flex flex-wrap items-center gap-1.5 mt-2">
               {purchaseActivityLabel && (
                 <span
-                  className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold border bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25"
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--primary-light)] text-[var(--primary)] border border-[var(--primary)]/20"
                   title={isFree ? t('pick_card.badge_free_unlocks_hint') : t('pick_card.badge_purchases_hint')}
                 >
-                  <span aria-hidden className="opacity-90">
-                    {isFree ? '✓' : '🛒'}
-                  </span>
                   {purchaseActivityLabel}
                 </span>
               )}
               {createdAt && (
-                <span className="text-[9px] text-[var(--text-muted)]">
+                <span className="text-[11px] text-[var(--text-muted)]">
                   {formatDateTimeShort(createdAt, lang)}
                 </span>
               )}
               {sport && SPORT_META[sport.toLowerCase()] && (
-                <span className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium border ${SPORT_META[sport.toLowerCase()].color}`}>
-                  {SPORT_META[sport.toLowerCase()].icon} {SPORT_META[sport.toLowerCase()].label}
-                </span>
+                <span className={SPORT_CHIP}>{SPORT_META[sport.toLowerCase()].label}</span>
               )}
               {displayStatus && (
-                <span className={`inline-flex px-1 py-0.5 rounded text-[9px] font-medium ${statusColor}`}>
+                <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}>
                   {t(`status.${displayStatus}` as any) || displayStatus.replace(/_/g, ' ')}
                 </span>
               )}
               {requiresSubscription ? (
-                <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/25">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
                   {t('pick_card.vip_included')}
                 </span>
               ) : null}
             </div>
             {price > 0 && priceDisplay && (
-              <div className="mt-1">
-                <span className="text-sm font-bold text-[var(--primary)]">
+              <div className="mt-2">
+                <span className="text-[17px] font-semibold tracking-tight text-[var(--text)]">
                   {priceDisplay.primary}
                 </span>
                 {priceDisplay.original && (
-                  <span className="ml-1 text-[9px] text-[var(--text-muted)]">({priceDisplay.original})</span>
+                  <span className="ml-1.5 text-[11px] text-[var(--text-muted)]">({priceDisplay.original})</span>
                 )}
               </div>
             )}
@@ -547,7 +545,7 @@ export function PickCard({
                               </span>
                             )}
                             {(p.result || p.status) && (
-                              <span className={`text-[7px] font-bold uppercase px-1 rounded ${resultChipClass(p.result || p.status)}`}>
+                              <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${resultChipClass(p.result || p.status)}`}>
                                 {p.result || p.status}
                               </span>
                             )}
@@ -658,25 +656,25 @@ export function PickCard({
           )}
 
           {/* Action Button - purchased, viewOnly, or free: View; else purchase */}
-          <div className="mt-auto pt-2 border-t border-[var(--border)]/80">
+          <div className="mt-auto pt-3 border-t border-[var(--separator)]">
             {showAccessCTA ? (
               <Link
                 href={detailsHref ?? `/coupons/${id}`}
-                className={buttonClassName({ variant: 'primary', size: 'sm', fullWidth: true, className: 'text-xs' })}
+                className={buttonClassName({ variant: 'primary', size: 'sm', fullWidth: true, className: 'text-[13px] font-semibold' })}
               >
                 {viewPredictionLabel}
               </Link>
             ) : requiresSubscription ? (
               <Link
                 href={subscribeHref}
-                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-xs' })}
+                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-[13px] font-semibold' })}
               >
                 {t('pick_card.subscribe_cta')}
               </Link>
             ) : viewOnly || isFree ? (
               <Link
                 href={loginRedirectPath}
-                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-xs' })}
+                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-[13px] font-semibold' })}
               >
                 {t('pick_card.sign_in_cta')}
               </Link>
@@ -688,14 +686,14 @@ export function PickCard({
                 fullWidth
                 onClick={handlePurchase}
                 disabled={purchasing}
-                className="text-xs"
+                className="text-[13px] font-semibold"
               >
                 {purchasing ? t('pick_card.processing') : t('pick_card.purchase')}
               </Button>
             ) : (
               <Link
                 href="/wallet"
-                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-xs py-1.5 min-h-0' })}
+                className={buttonClassName({ variant: 'accent', size: 'sm', fullWidth: true, className: 'text-[13px] font-semibold' })}
               >
                 {t('pick_card.top_up_wallet')}
               </Link>
@@ -756,7 +754,7 @@ export function PickCard({
             <div className="p-4 sm:p-6">
               {/* Tipster Info */}
               {tipster && (
-                <div className="mb-6 pb-6 border-b border-[var(--border)]">
+                <div className="mb-6 pb-6 border-b border-[var(--separator)]">
                   <div className="flex items-center gap-3">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold ${tipsterRankBadgeClass(tipster.rank)}`}>
                       {tipsterRankBadgeContent(tipster.rank)}
@@ -777,7 +775,7 @@ export function PickCard({
                           {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
                         </span>
                         <span className="text-sm font-medium text-[var(--success)]">
-                          {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })}
+                          {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(2) : '—') })}
                         </span>
                         <span className="text-sm text-[var(--text-muted)]">
                           {tipster.wonPicks}W / {tipster.lostPicks}L
@@ -877,7 +875,7 @@ export function PickCard({
 
               {/* Purchase Button in Modal - only when legs are not already visible to this viewer */}
               {!isPurchased && !picksRevealed && (
-                <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                <div className="mt-6 pt-6 border-t border-[var(--separator)]">
                   {requiresSubscription ? (
                     <Link
                       href={subscribeHref}
@@ -954,7 +952,7 @@ export function PickCard({
                           ) : null}
                         </div>
                         <p className="text-xs text-[var(--text-muted)]">
-                          {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(1) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
+                          {t('pick_card.win_rate', { rate: (tipster?.winRate != null ? Number(tipster.winRate).toFixed(2) : '—') })} • {t('pick_card.picks_count', { n: String(tipster.totalPicks) })}
                         </p>
                       </div>
                     </div>

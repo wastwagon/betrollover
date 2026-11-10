@@ -79,11 +79,9 @@ const RESULT_STYLE: Record<string, string> = {
   void:    RESULT_CHIP.void,
 };
 
-const SPORT_META: Record<string, { icon: string }> = {
-  Football: { icon: '⚽' }, Basketball: { icon: '🏀' }, Rugby: { icon: '🏉' },
-  MMA: { icon: '🥊' }, Volleyball: { icon: '🏐' }, Hockey: { icon: '🏒' },
-  'American Football': { icon: '🏈' }, Tennis: { icon: '🎾' }, 'Multi-Sport': { icon: '🌍' },
-};
+function sportInitial(sport?: string) {
+  return (sport?.trim().charAt(0) || 'P').toUpperCase();
+}
 
 function formatDate(s: string) {
   return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -248,7 +246,7 @@ export default function EarningsPage() {
         </div>
 
         {/* ── Fee explainer (always visible for tipsters) ── */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] px-5 py-4 mb-6 min-w-0">
+        <div className="ios-grouped-section px-5 py-4 mb-6 min-w-0">
           <p className="text-sm font-semibold text-[var(--text)]">{t('earnings.fee_how_title')}</p>
           <p className="text-xs text-[var(--text-muted)] mt-1 leading-relaxed">{t('earnings.fee_how_body')}</p>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-xs">
@@ -269,7 +267,7 @@ export default function EarningsPage() {
 
         {/* ── Summary cards ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 min-w-0">
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
+          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 min-w-0">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.wallet_balance')}</p>
             <p className="text-lg font-semibold text-[var(--primary)] tabular-nums">
               GHS {balance !== null ? balance.toFixed(2) : '—'}
@@ -277,13 +275,13 @@ export default function EarningsPage() {
             <Link href="/wallet" className="text-xs text-[var(--primary)] hover:underline mt-1 inline-block">{t('earnings.manage_wallet')}</Link>
           </div>
 
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
+          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 min-w-0">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.net_earned')}</p>
             <p className="text-lg font-semibold text-[var(--success)]">GHS {totalEarned.toFixed(2)}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">{t('earnings.from_payouts', { n: String(transactions.filter(tx => tx.type === 'payout').length) })}</p>
           </div>
 
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
+          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 min-w-0">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.platform_fee')}</p>
             <p className="text-lg font-semibold text-[var(--accent)]">GHS {totalCommissionDeducted.toFixed(2)}</p>
             <p className="text-xs text-[var(--text-muted)] mt-1">
@@ -293,7 +291,7 @@ export default function EarningsPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
+          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 min-w-0">
             <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{t('earnings.withdrawn')}</p>
             <p className="text-lg font-semibold text-[var(--text)]">GHS {totalWithdrawn.toFixed(2)}</p>
             {pendingWithdrawal > 0 && (
@@ -325,7 +323,7 @@ export default function EarningsPage() {
 
         {/* ── Earnings chart ── */}
         {chartData.length > 0 && (
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm mb-6 min-w-0">
+          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 mb-6 min-w-0">
             <h2 className="text-sm font-semibold text-[var(--text)] mb-4">{t('earnings.monthly_earnings')}</h2>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
@@ -351,8 +349,8 @@ export default function EarningsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 min-w-0">
           {/* ── Pick performance ── */}
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm min-w-0">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-[var(--border)] min-w-0">
+          <div className="ios-grouped-section overflow-hidden min-w-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-[var(--separator)] min-w-0">
               <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.top_revenue')}</h2>
               <Link href="/my-picks" className="text-xs text-[var(--primary)] hover:underline w-fit shrink-0">{t('earnings.view_all_picks')}</Link>
             </div>
@@ -363,14 +361,15 @@ export default function EarningsPage() {
                 <Link href="/create-pick" className="text-xs text-[var(--primary)] hover:underline mt-1 inline-block">{t('earnings.create_pick_link')}</Link>
               </div>
             ) : (
-              <ul className="divide-y divide-[var(--border)]">
+              <ul className="divide-y divide-[var(--separator)]">
                 {topRevenuePicks.map((c) => {
                   const revenue = (c.purchaseCount ?? 0) * Number(c.price);
-                  const sportIcon = c.sport ? (SPORT_META[c.sport]?.icon ?? '🌍') : '🌍';
                   return (
                     <li key={c.id}>
-                      <Link href={`/coupons/${c.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--bg)] transition-colors group min-w-0">
-                        <span className="text-lg shrink-0">{sportIcon}</span>
+                      <Link href={`/coupons/${c.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--fill-secondary)]/40 transition-colors group min-w-0">
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--fill-secondary)] text-[11px] font-semibold text-[var(--text-muted)]">
+                          {sportInitial(c.sport)}
+                        </span>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-[var(--text-muted)] break-words">
                             {c.purchaseCount} {c.purchaseCount !== 1 ? t('earnings.purchases') : t('earnings.purchase')} × GHS {Number(c.price).toFixed(2)}
@@ -391,7 +390,7 @@ export default function EarningsPage() {
           </div>
 
           {/* ── Pick stats summary ── */}
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
+          <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 min-w-0">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 min-w-0">
               <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.pick_stats')}</h2>
               {reviewSummary && (
@@ -416,7 +415,7 @@ export default function EarningsPage() {
                 { label: t('earnings.free'), value: publishedPicks.filter(c => Number(c.price) === 0).length },
                 { label: t('earnings.paid'), value: publishedPicks.filter(c => Number(c.price) > 0).length, color: 'text-[var(--accent)]' },
               ].map(({ label, value, color }) => (
-                <div key={label} className="rounded-xl bg-[var(--bg)] border border-[var(--border)] p-3 text-center">
+                <div key={label} className="rounded-xl bg-[var(--bg)] border border-[var(--separator)] p-3 text-center">
                   <p className={`text-xl font-bold ${color ?? 'text-[var(--text)]'}`}>{value}</p>
                   <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide mt-0.5">{label}</p>
                 </div>
@@ -459,7 +458,7 @@ export default function EarningsPage() {
               </Link>
               <Link
                 href="/wallet"
-                className="w-full sm:flex-1 text-center py-2 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                className="w-full sm:flex-1 text-center py-2 rounded-xl border border-[var(--separator)] text-sm font-semibold text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
               >
                 {t('earnings.withdraw')}
               </Link>
@@ -468,8 +467,8 @@ export default function EarningsPage() {
         </div>
 
         {/* ── Transaction history ── */}
-        <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm min-w-0">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between px-5 py-4 border-b border-[var(--border)] min-w-0">
+        <div className="ios-grouped-section overflow-hidden min-w-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between px-5 py-4 border-b border-[var(--separator)] min-w-0">
             <h2 className="text-sm font-semibold text-[var(--text)] min-w-0">{t('earnings.tx_history')}</h2>
             <SegmentedControl
               aria-label={t('earnings.tx_history')}
@@ -490,7 +489,7 @@ export default function EarningsPage() {
               <p className="text-sm text-[var(--text-muted)]">{txFilter === 'all' ? t('earnings.no_tx_all') : t('earnings.no_tx', { type: txFilter })}</p>
             </div>
           ) : (
-            <ul className="divide-y divide-[var(--border)]">
+            <ul className="divide-y divide-[var(--separator)]">
               {filteredTx.slice(0, 50).map((tx) => {
                 const isPlatformFee =
                   tx.type === 'commission' && (tx.reference?.startsWith('commission-') ?? false);

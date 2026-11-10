@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader, AdminStatTile } from '@/components/admin/AdminPageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { buttonClassName } from '@/components/ui/Button';
@@ -84,22 +85,15 @@ export default function AdminSupportPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950 w-full min-w-0 max-w-full overflow-x-hidden">
+    <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main-scroll min-w-0">
-        <div className="mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Support Inbox</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">Review and respond to user tickets.</p>
-        </div>
+        <AdminPageHeader title="Support inbox" tagline="Review and respond to user tickets." />
 
-        {/* Stats */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-            {(['open','in_progress','resolved','closed','total'] as const).map((k) => (
-              <div key={k} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 text-center shadow-sm">
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats[k]}</p>
-                <p className="text-xs text-gray-500 uppercase tracking-wide mt-0.5">{k.replace('_',' ')}</p>
-              </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3 mb-6">
+            {(['open', 'in_progress', 'resolved', 'closed', 'total'] as const).map((k) => (
+              <AdminStatTile key={k} label={k.replace('_', ' ')} value={stats[k]} />
             ))}
           </div>
         )}

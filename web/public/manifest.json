@@ -1,7 +1,7 @@
 {
   "name": "BetRollover — Football Tipster Marketplace",
   "short_name": "BetRollover",
-  "description": "Ghana tipster marketplace. Purchase-protected picks refund if they lose. Free 7-Day BetRollover when signed in. AccaSure1X2 VIP stays paid. 18+.",
+  "description": "Ghana tipster marketplace. Purchase-protected picks refund if they lose. Free 7-Day Rollover when signed in. AccaSure1X2 VIP stays paid. 18+.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f2f2f7",
@@ -33,7 +33,7 @@
     },
     {
       "name": "Accumulator Builder",
-      "short_name": "Acca Builder",
+      "short_name": "Acca",
       "description": "Build a same-day football accumulator",
       "url": "/acca-generator",
       "icons": [{ "src": "/BetRollover-logo.png", "sizes": "512x512", "type": "image/png" }]

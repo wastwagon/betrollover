@@ -9,7 +9,7 @@ import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { localizeHref } from '@/lib/locale-path';
 
 const footerLinkClass =
-  'hover:text-[var(--primary)] transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60 focus-visible:ring-offset-2';
+  'text-[13px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/60 focus-visible:ring-offset-2';
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -23,29 +23,16 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
 export function AppFooter() {
   const t = useT();
   return (
-    <footer className="mt-auto border-t border-[var(--border)] bg-[var(--bg-warm)]">
-      <div className="section-ux-gutter-wide py-12">
-        <AdSlot zoneSlug="footer" fullWidth className="flex justify-center mb-8 w-full max-w-4xl mx-auto" />
+    <footer className="mt-auto border-t border-[var(--separator)] bg-[var(--bg)]">
+      <div className="section-ux-gutter-wide py-10 sm:py-12">
+        <AdSlot zoneSlug="footer" fullWidth className="flex justify-center mb-8 w-full max-w-3xl mx-auto" />
 
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-8 border-b border-[var(--border)] pb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-8 pb-8 border-b border-[var(--separator)]">
           <div>
-            <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.company')}</h3>
-            <ul className="space-y-2 text-sm text-[var(--text-muted)]">
-              <li>
-                <FooterLink href="/support">
-                  {t('support.title')}
-                </FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/tools/converter">
-                  {t('currency.selector_title')}
-                </FooterLink>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.platform')}</h3>
-            <ul className="space-y-2 text-sm text-[var(--text-muted)]">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] mb-3">
+              {t('footer.platform')}
+            </h3>
+            <ul className="space-y-2.5">
               <li>
                 <FooterLink href="/marketplace">{t('nav.marketplace')}</FooterLink>
               </li>
@@ -53,27 +40,7 @@ export function AppFooter() {
                 <FooterLink href="/buy-football-tips">{t('buy.nav')}</FooterLink>
               </li>
               <li>
-                <FooterLink href="/football-tips-ghana">{t('footer.ghana_hub')}</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/football-predictions-today">{t('footer.predictions_today')}</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/track-record">{t('footer.track_record')}</FooterLink>
-              </li>
-              {isSubscriptionsEnabled() ? (
-                <li>
-                  <FooterLink href="/subscriptions/marketplace">{t('nav.subscription_marketplace')}</FooterLink>
-                </li>
-              ) : null}
-              <li>
-                <FooterLink href="/league-tables">{t('nav.league_tables')}</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/coupons/archive">{t('header.settled_archive')}</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/tipsters">{t('nav.top_tipsters')}</FooterLink>
+                <FooterLink href="/tipsters">{t('nav.tipsters')}</FooterLink>
               </li>
               <li>
                 <FooterLink href="/leaderboard">{t('nav.leaderboard')}</FooterLink>
@@ -81,43 +48,46 @@ export function AppFooter() {
               <li>
                 <FooterLink href="/rollover">{t('nav.rollover')}</FooterLink>
               </li>
+              {isSubscriptionsEnabled() ? (
+                <li>
+                  <FooterLink href="/subscriptions/marketplace">{t('nav.subscription_marketplace')}</FooterLink>
+                </li>
+              ) : null}
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.discover')}</h3>
-            <ul className="space-y-2 text-sm text-[var(--text-muted)]">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] mb-3">
+              {t('footer.discover')}
+            </h3>
+            <ul className="space-y-2.5">
               <li>
-                <FooterLink href="/news">{t('nav.news')}</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/learn">{t('nav.learn')}</FooterLink>
+                <FooterLink href="/how-it-works">{t('home.how_it_works')}</FooterLink>
               </li>
               <li>
                 <FooterLink href="/guides">{t('nav.short_guides')}</FooterLink>
               </li>
               <li>
-                <FooterLink href="/community">{t('community.title')}</FooterLink>
+                <FooterLink href="/learn">{t('nav.learn')}</FooterLink>
               </li>
+              <li>
+                <FooterLink href="/football-tips-ghana">{t('footer.ghana_hub')}</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/track-record">{t('footer.track_record')}</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/support">{t('support.title')}</FooterLink>
+              </li>
+            </ul>
+          </div>
+          <div className="col-span-2 md:col-span-1">
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] mb-3">
+              {t('footer.legal')}
+            </h3>
+            <ul className="space-y-2.5 mb-4">
               <li>
                 <FooterLink href="/about">{t('nav.about')}</FooterLink>
               </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-3 text-[var(--text)]">{t('header.section_platform_info')}</h3>
-            <ul className="space-y-2 text-sm text-[var(--text-muted)] mb-5">
-              <li>
-                <FooterLink href="/how-it-works">{t('home.how_it_works')}</FooterLink>
-              </li>
-            </ul>
-            <p className="text-xs text-[var(--text-muted)] border border-[var(--primary)]/25 rounded-lg p-3 bg-[var(--primary-light)]">
-              <span className="font-semibold text-[var(--primary)]">{t('resp.age_title')} </span>
-              {t('header.age_disclaimer')}
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-3 text-[var(--text)]">{t('footer.legal')}</h3>
-            <ul className="space-y-2 text-sm text-[var(--text-muted)]">
               <li>
                 <FooterLink href="/terms">{t('auth.terms')}</FooterLink>
               </li>
@@ -128,28 +98,24 @@ export function AppFooter() {
                 <FooterLink href="/responsible-gambling">{t('resp.headline')}</FooterLink>
               </li>
             </ul>
+            <p className="text-[12px] leading-relaxed text-[var(--text-muted)] rounded-xl border border-[var(--separator)] bg-[var(--fill-secondary)]/60 px-3 py-2.5">
+              <span className="font-semibold text-[var(--text)]">{t('resp.age_title')} </span>
+              {t('header.age_disclaimer')}
+            </p>
           </div>
         </div>
 
-        <div className="mb-8 pb-8 border-b border-[var(--border)]">
+        <div className="mb-6">
           <GrowthDistributionStrip compact />
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[var(--text-muted)]">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 text-[12px] text-[var(--text-muted)]">
           <span suppressHydrationWarning>
             &copy; {new Date().getFullYear()} BetRollover. {t('footer.rights')}
           </span>
-          <span className="inline-flex flex-wrap items-center justify-center gap-2 text-center max-w-xl">
-            <span className="shrink-0 rounded-md border border-[var(--border)] bg-[var(--fill-secondary)] px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-[var(--text)]">
-              {t('topbar.disclaimer_5')}
-            </span>
-            <Link href="/about" className={`${footerLinkClass} text-[10px] font-semibold uppercase tracking-wide`}>
-              {t('nav.about')}
-            </Link>
-            {t('footer.disclaimer')}
-          </span>
+          <p className="max-w-xl leading-relaxed sm:text-right">{t('footer.disclaimer')}</p>
         </div>
-        <p className="mt-4 text-center text-[11px] text-[var(--text-muted)]">
+        <p className="mt-4 text-center text-[11px] text-[var(--text-tertiary)]">
           {t('footer.credits_design_deployed')}{' '}
           <a
             href="https://oceancyber.net/"

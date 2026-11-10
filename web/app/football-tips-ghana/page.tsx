@@ -145,7 +145,7 @@ export default async function FootballTipsGhanaPage() {
           </Link>
         </div>
 
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
+        <article className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
           <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('ghana_hub.intro')}</p>
 
           <h2 className="text-lg font-semibold mt-6">{t('ghana_hub.platform_h')}</h2>
@@ -237,7 +237,7 @@ export default async function FootballTipsGhanaPage() {
           <p className="mt-6 text-xs text-[var(--text-tertiary)] leading-relaxed">{t('buy.not_guaranteed')}</p>
         </article>
 
-        <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7" aria-labelledby="ghana-settled">
+        <section className="mt-8 rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-6 sm:p-7" aria-labelledby="ghana-settled">
           <h2 id="ghana-settled" className="text-lg font-semibold text-[var(--text)]">
             {t('ghana_hub.settled_h')}
           </h2>
@@ -277,7 +277,7 @@ export default async function FootballTipsGhanaPage() {
           <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('how_it_works.faq_title')}</h2>
           <dl className="space-y-4">
             {faqs.map((faq) => (
-              <div key={faq.question} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+              <div key={faq.question} className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5">
                 <dt className="font-semibold text-[var(--text)]">{faq.question}</dt>
                 <dd className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
               </div>

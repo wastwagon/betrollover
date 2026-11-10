@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { getApiUrl, getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { emitAuthStorageSync } from '@/lib/auth-storage-sync';
@@ -212,25 +213,22 @@ export default function AdminUsersPage() {
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Users</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage users, roles, and account status.</p>
-        </div>
+        <AdminPageHeader title="Users" tagline="Manage users, roles, and account status." />
 
         {tipsterRequests.length > 0 && (
-          <div className="mb-6 p-6 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm">
-            <h2 className="font-semibold text-gray-900 dark:text-white mb-4 text-lg flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500 text-white text-sm font-bold">
+          <div className="mb-6 p-5 ios-grouped-section">
+            <h2 className="font-semibold text-[var(--text)] mb-4 text-[15px] flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--destructive)] text-white text-[11px] font-bold">
                 {tipsterRequests.length}
               </span>
               Tipster Requests
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {tipsterRequests.map((r) => (
-                <div key={r.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div key={r.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl bg-[var(--fill-secondary)]/40 border border-[var(--separator)]">
                   <div className="min-w-0">
-                    <span className="font-semibold text-gray-900 dark:text-white">{r.user?.displayName ?? 'User'}</span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400 block sm:inline sm:ml-2 break-all">{r.user?.email}</span>
+                    <span className="font-semibold text-[var(--text)]">{r.user?.displayName ?? 'User'}</span>
+                    <span className="text-sm text-[var(--text-muted)] block sm:inline sm:ml-2 break-all">{r.user?.email}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 shrink-0">
                     <button type="button"

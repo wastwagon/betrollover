@@ -32,18 +32,18 @@ function SidebarContent({
 
   return (
     <>
-      <div className="p-4 border-b border-[var(--border)] shrink-0 min-w-0">
+      <div className="p-4 border-b border-[var(--separator)] shrink-0 min-w-0">
         <div className="flex items-center justify-between min-w-0 gap-2">
           <Link
             href="/dashboard"
             onClick={onNavLink('/dashboard')}
-            className="font-bold text-lg text-[var(--text)] hover:text-[var(--primary)] transition-colors min-w-0 truncate"
+            className="font-display text-[17px] font-semibold tracking-tight text-[var(--text)] hover:text-[var(--primary)] transition-colors min-w-0 truncate"
           >
             BetRollover Admin
           </Link>
         </div>
       </div>
-      <nav className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as const }}>
+      <nav className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-0.5 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' as const }}>
         {adminNavFor('sidebar').map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -51,17 +51,19 @@ function SidebarContent({
               key={item.href}
               href={item.href}
               onClick={onNavLink(item.href)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors min-w-0 ${
-                isActive ? 'bg-[var(--primary)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)]'
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors min-w-0 ${
+                isActive
+                  ? 'bg-[var(--primary-light)] text-[var(--primary)]'
+                  : 'text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)]'
               }`}
             >
               <item.icon className="w-5 h-5" />
-              <span className="text-sm font-medium min-w-0 truncate">{item.label}</span>
+              <span className="text-[13px] font-semibold min-w-0 truncate">{item.label}</span>
             </Link>
           );
         })}
       </nav>
-      <div className="p-3 border-t border-[var(--border)] shrink-0">
+      <div className="p-2.5 border-t border-[var(--separator)] shrink-0">
         <Link
           href="/"
           onClick={(e) => {
@@ -74,10 +76,10 @@ function SidebarContent({
               router.push('/');
             }
           }}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors min-w-0"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)] transition-colors min-w-0"
         >
           <IconLogout className="w-5 h-5" />
-          <span className="text-sm font-medium min-w-0 truncate">Sign Out</span>
+          <span className="text-[13px] font-semibold min-w-0 truncate">Sign Out</span>
         </Link>
       </div>
     </>
@@ -111,7 +113,7 @@ export function AdminSidebar() {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="admin-mobile-nav-trigger md:hidden fixed left-4 z-[60] p-2.5 rounded-xl bg-[var(--card)] border border-[var(--border)] text-[var(--text)] hover:bg-[var(--primary-light)] hover:text-[var(--primary)] transition-colors shadow-lg top-[calc(env(safe-area-inset-top,0px)+0.75rem)]"
+        className="admin-mobile-nav-trigger md:hidden fixed left-4 z-[60] p-2.5 rounded-xl bg-[var(--card)] border border-[var(--separator)] text-[var(--text)] hover:bg-[var(--fill-secondary)] transition-colors top-[calc(env(safe-area-inset-top,0px)+0.75rem)]"
         aria-label="Open admin menu"
         aria-expanded={mobileOpen}
       >
@@ -121,7 +123,7 @@ export function AdminSidebar() {
       </button>
 
       {/* Desktop sidebar — always visible on md+ */}
-      <aside className="hidden md:flex w-56 min-h-screen min-w-0 bg-[var(--card)] border-r border-[var(--border)] flex-col fixed left-0 top-0 bottom-0 z-50 shadow-card overflow-x-hidden">
+      <aside className="hidden md:flex w-56 min-h-screen min-w-0 bg-[var(--card)] border-r border-[var(--separator)] flex-col fixed left-0 top-0 bottom-0 z-50 overflow-x-hidden">
         <SidebarContent onItemClick={() => {}} linkMode="default" />
       </aside>
 
@@ -134,19 +136,21 @@ export function AdminSidebar() {
           aria-label="Admin navigation menu"
         >
           <div
-            className="relative z-10 w-[280px] sm:w-[320px] max-w-[85vw] shrink-0 min-w-0 h-full min-h-[100dvh] min-h-screen bg-[var(--card)] border-r border-[var(--border)] shadow-2xl flex flex-col animate-slide-in-left pointer-events-auto overflow-x-hidden"
+            className="relative z-10 w-[280px] sm:w-[320px] max-w-[85vw] shrink-0 min-w-0 h-full min-h-[100dvh] min-h-screen bg-[var(--card)] border-r border-[var(--separator)] flex flex-col animate-slide-in-left pointer-events-auto overflow-x-hidden"
             style={{
               paddingTop: 'max(0px, env(safe-area-inset-top, 0px))',
               paddingBottom: 'max(0px, env(safe-area-inset-bottom, 0px))',
             }}
           >
-            <div className="p-4 border-b border-[var(--border)] shrink-0 min-w-0">
+            <div className="p-4 border-b border-[var(--separator)] shrink-0 min-w-0">
               <div className="flex items-center justify-between gap-2 min-w-0">
-                <h2 className="text-base font-semibold text-[var(--text)] min-w-0 flex-1 truncate pr-2">BetRollover Admin</h2>
+                <h2 className="font-display text-[17px] font-semibold tracking-tight text-[var(--text)] min-w-0 flex-1 truncate pr-2">
+                  BetRollover Admin
+                </h2>
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="shrink-0 rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--bg)] hover:text-[var(--text)] transition-colors"
+                  className="shrink-0 rounded-xl p-2 text-[var(--text-muted)] hover:bg-[var(--fill-secondary)] hover:text-[var(--text)] transition-colors"
                   aria-label="Close menu"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

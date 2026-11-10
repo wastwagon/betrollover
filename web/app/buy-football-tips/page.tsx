@@ -151,116 +151,129 @@ export default async function BuyFootballTipsPage() {
           </Link>
         </div>
 
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.intro')}</p>
+        <div className="space-y-3.5">
+          <section className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-4 sm:px-5 sm:py-5">
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">{t('buy.intro')}</p>
+          </section>
 
-          <h2 className="text-lg font-semibold mt-6">{t('buy.picks_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('buy.picks_body')}{' '}
-            <Link href="/guides/purchase-protection" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('guides.escrow_short')}
-            </Link>
-            {' · '}
-            <Link href="/football-tips-ghana" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('buy.regions_ghana_hub_link')}
-            </Link>
-          </p>
+          <section className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-4 sm:px-5 sm:py-5">
+            <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{t('buy.picks_h')}</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">
+              {t('buy.picks_body')}{' '}
+              <Link href="/guides/purchase-protection" className="font-semibold text-[var(--primary)]">
+                {t('guides.escrow_short')}
+              </Link>
+              {' · '}
+              <Link href="/football-tips-ghana" className="font-semibold text-[var(--primary)]">
+                {t('buy.regions_ghana_hub_link')}
+              </Link>
+            </p>
+          </section>
 
-          <h2 className="text-lg font-semibold mt-6">{t('buy.vip_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.vip_body')}</p>
+          <section className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-4 sm:px-5 sm:py-5">
+            <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{t('buy.vip_h')}</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">{t('buy.vip_body')}</p>
 
-          {plans.length === 0 ? (
-            <p className="mt-4 text-sm text-[var(--text-muted)]">{t('buy.vip_empty')}</p>
-          ) : (
-            <ul className="mt-4 space-y-4">
-              {plans.map((row) => {
-                const name = publicPlanName(row);
-                const tipsterName = row.tipster?.displayName || row.tipster?.username || 'Tipster';
-                const automated =
-                  !!row.tipster?.isAi ||
-                  isAccaDeskTipsterType(row.tipster?.tipsterType) ||
-                  isVipRosterUsername(row.tipster?.username);
-                const days = row.package.durationDays;
-                const price = Number(row.package.price);
-                const included =
-                  row.package.includedSlipsPerPeriod != null
-                    ? t('buy.included_up_to', {
-                        count: String(row.package.includedSlipsPerPeriod),
-                        days: String(days),
-                      })
-                    : t('buy.vip_included');
-                return (
-                  <li
-                    key={row.package.id}
-                    className="rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4 text-sm leading-relaxed"
-                  >
-                    <p className="font-semibold text-[var(--text)]">{name}</p>
-                    <p className="mt-1 text-[var(--text-muted)]">
-                      {t('buy.tipster_label')}:{' '}
-                      {row.tipster?.username ? (
-                        <Link
-                          href={`/tipsters/${encodeURIComponent(row.tipster.username)}`}
-                          className="font-semibold text-[var(--primary)] hover:underline"
-                        >
-                          {tipsterName}
-                        </Link>
-                      ) : (
-                        tipsterName
-                      )}
-                    </p>
-                    <p className="mt-1 text-[var(--text-muted)]">
-                      {automated ? t('buy.vip_automated_note') : t('buy.vip_human_note')}
-                    </p>
-                    <p className="mt-2 text-[var(--text)]">
-                      {t('buy.price_label')}: <strong>GHS {price.toFixed(2)}</strong>
-                    </p>
-                    <p className="text-[var(--text)]">
-                      {t('buy.length_label')}: <strong>{t('buy.days_unit', { days: String(days) })}</strong>
-                    </p>
-                    <p className="mt-2 text-[var(--text-muted)]">{included}</p>
-                    <p className="mt-2 text-[var(--text-muted)]">{t('buy.vip_refund_rule')}</p>
-                    <p className="mt-3">
+            {plans.length === 0 ? (
+              <p className="mt-4 text-[15px] text-[var(--text-muted)]">{t('buy.vip_empty')}</p>
+            ) : (
+              <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {plans.map((row) => {
+                  const name = publicPlanName(row);
+                  const tipsterName = row.tipster?.displayName || row.tipster?.username || 'Tipster';
+                  const automated =
+                    !!row.tipster?.isAi ||
+                    isAccaDeskTipsterType(row.tipster?.tipsterType) ||
+                    isVipRosterUsername(row.tipster?.username);
+                  const days = row.package.durationDays;
+                  const price = Number(row.package.price);
+                  const included =
+                    row.package.includedSlipsPerPeriod != null
+                      ? t('buy.included_up_to', {
+                          count: String(row.package.includedSlipsPerPeriod),
+                          days: String(days),
+                        })
+                      : t('buy.vip_included');
+                  return (
+                    <li
+                      key={row.package.id}
+                      className="flex flex-col rounded-2xl border border-[var(--separator)] bg-[var(--bg)] p-4 sm:p-5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{name}</p>
+                          <p className="mt-1 text-[13px] text-[var(--text-muted)]">
+                            {t('buy.tipster_label')}:{' '}
+                            {row.tipster?.username ? (
+                              <Link
+                                href={`/tipsters/${encodeURIComponent(row.tipster.username)}`}
+                                className="font-semibold text-[var(--primary)]"
+                              >
+                                {tipsterName}
+                              </Link>
+                            ) : (
+                              tipsterName
+                            )}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-[var(--fill-secondary)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
+                          {automated ? t('buy.vip_automated_note') : t('buy.vip_human_note')}
+                        </span>
+                      </div>
+                      <p className="mt-4 text-[28px] font-semibold tracking-tight tabular-nums text-[var(--text)]">
+                        GHS {price.toFixed(2)}
+                      </p>
+                      <p className="mt-1 text-[13px] text-[var(--text-muted)]">
+                        {t('buy.length_label')}: {t('buy.days_unit', { days: String(days) })}
+                      </p>
+                      <p className="mt-3 text-[14px] leading-relaxed text-[var(--text-muted)]">{included}</p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-tertiary)]">{t('buy.vip_refund_rule')}</p>
                       <Link
                         href={`/subscriptions/checkout?packageId=${row.package.id}`}
-                        className="font-semibold text-[var(--primary)] hover:underline"
+                        className={buttonClassName({
+                          size: 'sm',
+                          className: 'mt-4 w-full min-h-[44px] text-[13px] font-semibold',
+                        })}
                       >
                         {t('buy.open_checkout', { name })}
                       </Link>
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
 
-          <h2 className="text-lg font-semibold mt-6">{t('buy.compare_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('buy.compare_body')}{' '}
-            <Link href="/leaderboard" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('nav.leaderboard')}
-            </Link>
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('buy.regions_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.regions_body')}</p>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('buy.marketplace_refund_plain')}{' '}
-            <Link href="/how-it-works#refund-rule" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('buy.full_refund_rule_link')}
-            </Link>
-            .
-          </p>
-
-          <p className="mt-6 text-xs text-[var(--text-tertiary)] leading-relaxed">{t('buy.not_guaranteed')}</p>
-        </article>
+          <section className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-4 sm:px-5 sm:py-5">
+            <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{t('buy.compare_h')}</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">
+              {t('buy.compare_body')}{' '}
+              <Link href="/leaderboard" className="font-semibold text-[var(--primary)]">
+                {t('nav.leaderboard')}
+              </Link>
+            </p>
+            <h2 className="mt-5 text-[17px] font-semibold tracking-tight text-[var(--text)]">{t('buy.regions_h')}</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">{t('buy.regions_body')}</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">
+              {t('buy.marketplace_refund_plain')}{' '}
+              <Link href="/how-it-works#refund-rule" className="font-semibold text-[var(--primary)]">
+                {t('buy.full_refund_rule_link')}
+              </Link>
+              .
+            </p>
+            <p className="mt-5 text-[12px] leading-relaxed text-[var(--text-tertiary)]">{t('buy.not_guaranteed')}</p>
+          </section>
+        </div>
 
         <section className="mt-8" aria-label="FAQ">
-          <h2 className="text-lg font-semibold text-[var(--text)] mb-4">{t('how_it_works.faq_title')}</h2>
-          <dl className="space-y-4">
+          <h2 className="mb-3 px-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+            {t('how_it_works.faq_title')}
+          </h2>
+          <dl className="ios-grouped-section overflow-hidden divide-y divide-[var(--separator)]">
             {faqs.map((faq) => (
-              <div key={faq.question} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-                <dt className="font-semibold text-[var(--text)]">{faq.question}</dt>
-                <dd className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
+              <div key={faq.question} className="bg-[var(--card)] px-4 py-3.5 sm:px-5 sm:py-4">
+                <dt className="text-[15px] font-semibold text-[var(--text)]">{faq.question}</dt>
+                <dd className="mt-1.5 text-[14px] leading-relaxed text-[var(--text-muted)]">{faq.answer}</dd>
               </div>
             ))}
           </dl>

@@ -62,13 +62,54 @@ function parseMarketplacePayload(data: unknown): MarketplaceCardItem[] {
   return Array.isArray(items) ? (items as MarketplaceCardItem[]) : [];
 }
 
+/** Prefer leaderboard ROI / win rate / pick counts so home cards match the tipster shelf. */
+function applyLeaderboardTipsterStats(
+  items: MarketplaceCardItem[],
+  leaderboard: unknown,
+): MarketplaceCardItem[] {
+  const raw = (leaderboard as { leaderboard?: unknown[] })?.leaderboard;
+  const rows = Array.isArray(raw) ? raw : Array.isArray(leaderboard) ? leaderboard : [];
+  const byUser = new Map<string, Record<string, unknown>>();
+  for (const row of rows) {
+    const e = row as Record<string, unknown>;
+    const u = String(e.username || '')
+      .trim()
+      .toLowerCase();
+    if (u) byUser.set(u, e);
+  }
+  return items.map((item) => {
+    const key = item.tipster?.username?.trim().toLowerCase();
+    if (!key || !item.tipster) return item;
+    const lb = byUser.get(key);
+    if (!lb) return item;
+    const roi = Number(lb.roi);
+    const wr = Number(lb.win_rate);
+    const total = Number(lb.total_predictions);
+    const won = Number(lb.total_wins);
+    const lost = Number(lb.total_losses);
+    return {
+      ...item,
+      tipster: {
+        ...item.tipster,
+        roi: Number.isFinite(roi) ? roi : item.tipster.roi,
+        winRate: Number.isFinite(wr) ? wr : item.tipster.winRate,
+        totalPicks: Number.isFinite(total) && total > 0 ? total : item.tipster.totalPicks,
+        wonPicks: Number.isFinite(won) ? won : item.tipster.wonPicks,
+        lostPicks: Number.isFinite(lost) ? lost : item.tipster.lostPicks,
+        isAi: item.tipster.isAi ?? !!lb.is_ai,
+        is_ai: item.tipster.is_ai ?? !!lb.is_ai,
+      },
+    };
+  });
+}
+
 function seedElite(
   marketItems: Record<string, unknown>[],
   leaderboard: Record<string, unknown>[],
 ): MarketplaceCardItem[] {
   const allItems = parseMarketplacePayload({ items: marketItems });
   const eliteNames = eliteLeaderboardUsernames({ leaderboard });
-  return pickEliteShowcase(allItems, eliteNames, 8);
+  return applyLeaderboardTipsterStats(pickEliteShowcase(allItems, eliteNames, 8), leaderboard);
 }
 
 export function HomeQuickMarketplaceSections({
@@ -102,7 +143,9 @@ export function HomeQuickMarketplaceSections({
         if (cancelled) return;
         const eliteNames = eliteLeaderboardUsernames(lbJson);
         const allItems = parseMarketplacePayload(allJson);
-        setElite(pickEliteShowcase(allItems, eliteNames, 8));
+        setElite(
+          applyLeaderboardTipsterStats(pickEliteShowcase(allItems, eliteNames, 8), lbJson),
+        );
       } catch {
         if (!cancelled && seeded.length === 0) {
           setElite([]);
@@ -119,7 +162,7 @@ export function HomeQuickMarketplaceSections({
   const skeleton = (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--border)]" />
+        <div key={i} className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--separator)]" />
       ))}
     </div>
   );
@@ -158,7 +201,7 @@ export function HomeQuickMarketplaceSections({
 
   return (
     <>
-      <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
+      <section className="py-12 md:py-16 border-t border-[var(--separator)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-gutter-wide w-full min-w-0">
           <div className="text-center mb-6 sm:mb-8 max-w-2xl mx-auto px-1">
             <span className="inline-block px-3 py-1 rounded-full bg-[var(--primary-light)] text-[var(--primary)] text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-2">

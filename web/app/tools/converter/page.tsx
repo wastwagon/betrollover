@@ -37,13 +37,13 @@ export default function ConverterPage() {
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 mb-6">
           <Link
             href="/"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--separator)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             {t('nav.home')}
           </Link>
           <Link
             href="/wallet"
-            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
+            className="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-xl border border-[var(--separator)] bg-[var(--card)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors w-full sm:w-auto"
           >
             {t('nav.wallet')}
           </Link>
@@ -54,7 +54,7 @@ export default function ConverterPage() {
         </div>
 
         {/* Input */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 mb-6 shadow-sm">
+        <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-6 mb-6 shadow-sm">
           <label className="block text-sm font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
             Amount in GHS
           </label>
@@ -77,7 +77,7 @@ export default function ConverterPage() {
           {rows.map((c) => (
             <div
               key={c.code}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)] transition-colors min-w-0"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)] transition-colors min-w-0"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-2xl">{c.flag}</span>

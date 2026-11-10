@@ -180,6 +180,16 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/guides/accumulator-settlement',
+        destination: '/guides/how-accumulators-settle',
+        permanent: true,
+      },
+      {
+        source: '/fr/guides/accumulator-settlement',
+        destination: '/fr/guides/how-accumulators-settle',
+        permanent: true,
+      },
+      {
         source: '/sportybet-booking-codes',
         destination: '/football-tips-ghana',
         permanent: true,

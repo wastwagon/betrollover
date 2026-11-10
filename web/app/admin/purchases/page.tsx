@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader, AdminStatTile } from '@/components/admin/AdminPageHeader';
 
 import { getApiUrl } from '@/lib/site-config';
 import { Input } from '@/components/ui/Input';
@@ -72,18 +73,14 @@ export default function AdminPurchasesPage() {
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Purchases Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">View all pick purchases across the platform.</p>
-        </div>
+        <AdminPageHeader title="Purchases" tagline="View all pick purchases across the platform." />
 
-        <div className="mb-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white">
-          <p className="text-sm opacity-90 mb-1">Gross subtotal (this page)</p>
-          <p className="text-3xl font-bold">GHS {pageSubtotalGross.toFixed(2)}</p>
-          <p className="text-xs opacity-85 mt-2 leading-snug max-w-xl">
-            Sum of listed purchase prices only. Platform-wide gross is under Admin → Analytics. Buyer “Total spent” on the user
-            dashboard counts winning picks only (lost/void are refunded).
-          </p>
+        <div className="mb-6 max-w-md">
+          <AdminStatTile
+            label="Gross subtotal (this page)"
+            value={`GHS ${pageSubtotalGross.toFixed(2)}`}
+            hint="Listed purchase prices only. Platform-wide gross is under Analytics. Buyer total spent counts wins only."
+          />
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">

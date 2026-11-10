@@ -160,7 +160,7 @@ function SubscriptionsContent() {
         )}
 
         {activeSubs.length === 0 ? (
-          <div className="w-full min-w-0 max-w-lg rounded-2xl p-6 sm:p-8 text-center border border-[var(--separator)] bg-[var(--card)] shadow-sm">
+          <div className="w-full min-w-0 max-w-lg rounded-2xl p-6 sm:p-8 text-center border border-[var(--separator)] bg-[var(--card)]">
             <p className="font-display text-[var(--text)] font-semibold mb-2">{t('subscriptions.page_empty_title')}</p>
             <p className="text-sm text-[var(--text-muted)] mb-3">{t('subscriptions.page_empty_sub')}</p>
             <p className="text-sm text-[var(--text-muted)] mb-6 leading-relaxed">
@@ -199,7 +199,7 @@ function SubscriptionsContent() {
                 {activeSubs.map((s) => (
                   <div
                     key={s.id}
-                    className="rounded-xl p-4 border border-[var(--border)] bg-[var(--card)] min-w-0"
+                    className="rounded-xl p-4 border border-[var(--separator)] bg-[var(--card)] min-w-0"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-[var(--text)] break-words">

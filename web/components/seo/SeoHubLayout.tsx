@@ -94,7 +94,7 @@ export function SeoHubLayout({
           </div>
         )}
 
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
+        <article className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
           {intro.map((p) => (
             <p key={p.slice(0, 48)} className="text-sm text-[var(--text-muted)] leading-relaxed mt-3 first:mt-0">
               {p}
@@ -130,7 +130,7 @@ export function SeoHubLayout({
         </article>
 
         {live ? (
-          <section className="mt-8 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7" aria-labelledby="seo-hub-live">
+          <section className="mt-8 rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-6 sm:p-7" aria-labelledby="seo-hub-live">
             <h2 id="seo-hub-live" className="text-lg font-semibold text-[var(--text)]">
               {live.heading}
             </h2>
@@ -162,7 +162,7 @@ export function SeoHubLayout({
           <h2 className="text-lg font-semibold text-[var(--text)] mb-4">FAQ</h2>
           <dl className="space-y-4">
             {faqs.map((faq) => (
-              <div key={faq.question} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+              <div key={faq.question} className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5">
                 <dt className="font-semibold text-[var(--text)]">{faq.question}</dt>
                 <dd className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
               </div>

@@ -26,7 +26,7 @@ const LINKS: { id: EducationFold; href: string; labelKey: TranslationKey }[] = [
   { id: 'escrow', href: '/guides/purchase-protection', labelKey: 'guides.escrow_short' },
   { id: 'evaluate', href: '/guides/evaluate-tipsters', labelKey: 'guides.eval_short' },
   { id: 'stats', href: '/guides/read-tipster-stats', labelKey: 'guides.stats_short' },
-  { id: 'acca', href: '/guides/accumulator-settlement', labelKey: 'guides.acca_short' },
+  { id: 'acca', href: '/guides/how-accumulators-settle', labelKey: 'guides.acca_short' },
   { id: 'free', href: '/guides/free-and-paid-picks', labelKey: 'guides.free_short' },
   { id: 'board', href: '/guides/leaderboard-ranking', labelKey: 'guides.board_short' },
   { id: 'ghana_vs', href: '/guides/ghana-free-tips-vs-protected', labelKey: 'guides.ghana_vs_short' },
@@ -48,7 +48,7 @@ export function EducationRelatedLinks({ current }: { current: EducationFold }) {
 
   return (
     <nav className="mb-6" aria-label={t('education.also')}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)] mb-2">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)] mb-2">
         {t('education.also')}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -56,7 +56,7 @@ export function EducationRelatedLinks({ current }: { current: EducationFold }) {
           <Link
             key={link.id}
             href={link.href}
-            className="inline-flex items-center px-3 py-2 rounded-xl bg-[var(--card)] border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors no-underline"
+            className="inline-flex items-center rounded-full bg-[var(--fill-secondary)] px-3 py-1.5 text-[13px] font-semibold text-[var(--text)] no-underline hover:bg-[var(--separator)] transition-colors"
           >
             {t(link.labelKey)}
           </Link>

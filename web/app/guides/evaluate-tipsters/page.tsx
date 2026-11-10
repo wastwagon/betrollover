@@ -5,6 +5,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { PageHeader } from '@/components/PageHeader';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { GuidePanel, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 
@@ -48,36 +49,33 @@ export default async function EvaluateTipstersGuidePage() {
         />
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="evaluate" />
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.eval_intro')}
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.eval_checklist_h')}</h2>
-          <ul className="list-disc pl-5 mt-3 space-y-2 text-sm text-[var(--text-muted)]">
-            {checklist.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.eval_verify_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.eval_verify_before')}{' '}
-            <Link href="/tipsters" className="text-[var(--primary)] hover:underline">
-              {t('guides.eval_profiles')}
-            </Link>{' '}
-            {t('guides.eval_verify_mid')}{' '}
-            <Link href="/coupons/archive" className="text-[var(--primary)] hover:underline">
-              {t('guides.eval_archive')}
-            </Link>{' '}
-            {t('guides.eval_verify_after')}
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.eval_risk_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.eval_risk_body')}
-          </p>
-        </article>
+        <GuideStack>
+          <GuidePanel>
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">{t('guides.eval_intro')}</p>
+          </GuidePanel>
+          <div>
+            <h2 className="mb-3 px-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+              {t('guides.eval_checklist_h')}
+            </h2>
+            <GuideStack>
+              {checklist.map((item, i) => (
+                <GuideStep key={item} index={String(i + 1)} title={item} />
+              ))}
+            </GuideStack>
+          </div>
+          <GuideStep title={t('guides.eval_verify_h')}>
+            <p>
+              {t('guides.eval_verify_before')}{' '}
+              <Link href="/tipsters">{t('guides.eval_profiles')}</Link>{' '}
+              {t('guides.eval_verify_mid')}{' '}
+              <Link href="/coupons/archive">{t('guides.eval_archive')}</Link>{' '}
+              {t('guides.eval_verify_after')}
+            </p>
+          </GuideStep>
+          <GuideStep title={t('guides.eval_risk_h')}>
+            <p>{t('guides.eval_risk_body')}</p>
+          </GuideStep>
+        </GuideStack>
       </main>
       <AppFooter />
     </div>

@@ -7,6 +7,13 @@ import { getLocale, buildT } from '@/lib/i18n';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { buttonClassName } from '@/components/ui/button-styles';
+import {
+  GuideCallout,
+  GuideFaqList,
+  GuidePanel,
+  GuideStack,
+  GuideStep,
+} from '@/components/education/GuideChrome';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,17 +35,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function ListItem({ text }: { text: string }) {
+function splitStep(text: string): { title: string; body: string | null } {
   const sep = ' — ';
   const i = text.indexOf(sep);
-  if (i === -1) return <>{text}</>;
-  return (
-    <>
-      <strong>{text.slice(0, i)}</strong>
-      {sep}
-      {text.slice(i + sep.length)}
-    </>
-  );
+  if (i === -1) return { title: text, body: null };
+  return { title: text.slice(0, i), body: text.slice(i + sep.length) };
 }
 
 export default async function HowItWorksPage() {
@@ -74,103 +75,103 @@ export default async function HowItWorksPage() {
       <UnifiedHeader />
 
       <main className="w-full min-w-0">
-        <div className="section-ux-page w-full min-w-0">
+        <div className="section-ux-page-narrow w-full min-w-0">
           <PageHeader
             label={t('how_it_works.page_label')}
             title={t('how_it_works.page_h1')}
             tagline={t('how_it_works.page_lead')}
           />
-          <article className="section-ux-prose min-w-0">
-          <div className="prose prose-slate max-w-none text-[var(--text)] space-y-8 sm:space-y-10 leading-relaxed text-sm sm:text-[15px] min-w-0">
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/40 p-4 sm:p-6 md:p-7 min-w-0">
-              <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 capitalize text-[var(--text)]">{t('how_it_works.buyers_h2')}</h2>
-              <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-[var(--primary)] marker:font-semibold">
-                {buyerSteps.map((item) => (
-                  <li key={item.slice(0, 48)}>
-                    <ListItem text={item} />
-                  </li>
-                ))}
-              </ol>
-            </section>
+          <GuideStack>
+            <div>
+              <h2 className="mb-3 px-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                {t('how_it_works.buyers_h2')}
+              </h2>
+              <GuideStack>
+                {buyerSteps.map((item, i) => {
+                  const step = splitStep(item);
+                  return (
+                    <GuideStep key={step.title} index={String(i + 1)} title={step.title}>
+                      {step.body ? <p>{step.body}</p> : null}
+                    </GuideStep>
+                  );
+                })}
+              </GuideStack>
+            </div>
 
-            <section className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-4 sm:p-6 md:p-7 min-w-0">
-              <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4 capitalize text-[var(--text)]">{t('how_it_works.tipsters_h2')}</h2>
-              <ol className="list-decimal pl-4 sm:pl-6 space-y-3 sm:space-y-4 marker:text-[var(--accent)] marker:font-semibold">
-                {tipsterSteps.map((item) => (
-                  <li key={item.slice(0, 48)}>
-                    <ListItem text={item} />
-                  </li>
-                ))}
-              </ol>
-            </section>
+            <div>
+              <h2 className="mb-3 px-1 text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--text-tertiary)]">
+                {t('how_it_works.tipsters_h2')}
+              </h2>
+              <GuideStack>
+                {tipsterSteps.map((item, i) => {
+                  const step = splitStep(item);
+                  return (
+                    <GuideStep key={step.title} index={String(i + 1)} title={step.title}>
+                      {step.body ? <p>{step.body}</p> : null}
+                    </GuideStep>
+                  );
+                })}
+              </GuideStack>
+            </div>
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6 min-w-0">
-              <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.settlement_h2')}</h2>
-              <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.settlement_p')}</p>
-              <p className="mt-3 mb-0 text-[var(--text-muted)] leading-relaxed">
-                <Link href="/guides/accumulator-settlement" className="text-[var(--primary)] hover:underline">{t('guides.acca_card_title')}</Link>
-                {' · '}
-                <Link href="/guides/free-and-paid-picks" className="text-[var(--primary)] hover:underline">{t('guides.free_card_title')}</Link>
+            <GuidePanel>
+              <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">
+                {t('how_it_works.settlement_h2')}
+              </h2>
+              <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">
+                {t('how_it_works.settlement_p')}
               </p>
-            </section>
+              <p className="mt-3 text-[14px] leading-relaxed text-[var(--text-muted)] [&_a]:font-semibold [&_a]:text-[var(--primary)]">
+                <Link href="/guides/how-accumulators-settle">{t('guides.acca_card_title')}</Link>
+                {' · '}
+                <Link href="/guides/free-and-paid-picks">{t('guides.free_card_title')}</Link>
+              </p>
+            </GuidePanel>
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/30 p-4 sm:p-6 min-w-0">
-              <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.verification_h2')}</h2>
-              <p className="m-0 text-[var(--text-muted)] leading-relaxed">{t('how_it_works.verification_p', sellVars)}</p>
-            </section>
+            <GuidePanel>
+              <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">
+                {t('how_it_works.verification_h2')}
+              </h2>
+              <p className="mt-2 text-[15px] leading-relaxed text-[var(--text-muted)]">
+                {t('how_it_works.verification_p', sellVars)}
+              </p>
+            </GuidePanel>
 
             <section
               id="refund-rule"
-              className="rounded-2xl border border-[var(--primary)]/25 bg-[var(--primary-light)]/40 p-4 sm:p-6 min-w-0 scroll-mt-[calc(var(--br-chrome-below-header)+1rem)]"
+              className="scroll-mt-[calc(var(--br-chrome-below-header)+1rem)]"
             >
-              <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3">{t('how_it_works.refund_h2')}</h2>
-              <p className="m-0 text-[var(--text)] leading-relaxed">{t('how_it_works.refund_when')}</p>
-              <p className="mt-3 mb-0 text-[var(--text)] leading-relaxed">{t('how_it_works.refund_how_long')}</p>
-              <p className="mt-3 mb-0 text-[var(--text)] leading-relaxed">{t('how_it_works.refund_where')}</p>
-              <p className="mt-3 mb-0 text-sm text-[var(--text-muted)] leading-relaxed">
-                <Link href="/guides/purchase-protection" className="text-[var(--primary)] hover:underline">
-                  {t('how_it_works.guides_link')}
-                </Link>
-                {' · '}
-                <Link href="/support" className="text-[var(--primary)] hover:underline">
-                  {t('support.title')}
-                </Link>
-                {' · '}
-                <a href="mailto:support@betrollover.com" className="text-[var(--primary)] hover:underline">
-                  support@betrollover.com
-                </a>
+              <GuideCallout>
+                <span className="block text-[15px] font-semibold text-[var(--text)] mb-2">
+                  {t('how_it_works.refund_h2')}
+                </span>
+                <span className="block leading-relaxed">{t('how_it_works.refund_when')}</span>
+                <span className="mt-2 block leading-relaxed">{t('how_it_works.refund_how_long')}</span>
+                <span className="mt-2 block leading-relaxed">{t('how_it_works.refund_where')}</span>
+                <span className="mt-3 block text-[12px] text-[var(--text-muted)] [&_a]:font-semibold [&_a]:text-[var(--primary)]">
+                  <Link href="/guides/purchase-protection">{t('how_it_works.guides_link')}</Link>
+                  {' · '}
+                  <Link href="/support">{t('support.title')}</Link>
+                  {' · '}
+                  <a href="mailto:support@betrollover.com">support@betrollover.com</a>
+                </span>
+              </GuideCallout>
+            </section>
+
+            <div id="faq" className="scroll-mt-[calc(var(--br-chrome-below-header)+1rem)]">
+              <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+            </div>
+
+            <GuidePanel>
+              <p className="font-display font-semibold text-[var(--text)] mb-3 text-[15px]">
+                {t('about.ready_cta')}
               </p>
-            </section>
-
-            <section id="faq" className="scroll-mt-[calc(var(--br-chrome-below-header)+1rem)] min-w-0">
-              <h2 className="text-base sm:text-lg md:text-xl font-semibold mb-4 sm:mb-5">{t('how_it_works.faq_title')}</h2>
-              <ul className="space-y-3 sm:space-y-4 list-none pl-0">
-                {faqs.map((faq, i) => (
-                  <li
-                    key={i}
-                    className="rounded-xl border border-[var(--border)] bg-[var(--card)]/50 p-4 sm:p-5 shadow-sm"
-                  >
-                    <h3 className="text-sm sm:text-[15px] font-semibold text-[var(--text)] mb-2 leading-snug">{faq.question}</h3>
-                    <p className="text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed m-0">{faq.answer}</p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <div className="mt-8 sm:mt-10 p-4 sm:p-6 rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] min-w-0">
-              <p className="font-display font-semibold text-[var(--text)] mb-3 sm:mb-4 text-sm sm:text-base">{t('about.ready_cta')}</p>
-              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 min-w-0">
-                <Link
-                  href="/marketplace"
-                  className={buttonClassName({ className: 'w-full sm:w-auto' })}
-                >
+              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3">
+                <Link href="/marketplace" className={buttonClassName({ className: 'w-full sm:w-auto' })}>
                   {t('learn.cta_marketplace')}
                 </Link>
-                <Link
-                  href="/register"
-                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
-                >
+                <Link href="/register" className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}>
                   {t('auth.register')}
                 </Link>
                 <Link
@@ -179,17 +180,12 @@ export default async function HowItWorksPage() {
                 >
                   {t('how_it_works.guides_link')}
                 </Link>
-                <Link
-                  href="/learn"
-                  className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}
-                >
+                <Link href="/learn" className={buttonClassName({ variant: 'secondary', className: 'w-full sm:w-auto' })}>
                   {t('how_it_works.learn_link')}
                 </Link>
               </div>
-            </div>
-
-          </div>
-        </article>
+            </GuidePanel>
+          </GuideStack>
         </div>
 
         <div className="mt-16">

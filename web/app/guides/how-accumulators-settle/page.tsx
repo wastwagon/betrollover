@@ -6,10 +6,12 @@ import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { GuideFaqList, GuidePanel, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
+import { metaKeywordsFromTranslation } from '@/lib/seo/meta-keywords';
 
-const GUIDE_PATH = '/guides/accumulator-settlement';
+const GUIDE_PATH = '/guides/how-accumulators-settle';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -19,6 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    keywords: metaKeywordsFromTranslation(t('guides.acca_meta_keywords')),
     alternates: seoAlternates(GUIDE_PATH, locale),
     openGraph: {
       url: localizedUrl(GUIDE_PATH, locale),
@@ -28,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function AccumulatorSettlementGuidePage() {
+export default async function HowAccumulatorsSettleGuidePage() {
   const locale = await getLocale();
   const t = buildT(locale);
   const faqs = [
@@ -49,37 +52,27 @@ export default async function AccumulatorSettlementGuidePage() {
         />
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="acca" />
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.acca_intro')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.acca_legs_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.acca_legs_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.acca_win_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.acca_win_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.acca_void_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.acca_void_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.acca_refund_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.acca_refund_before')}{' '}
-            <Link href="/guides/purchase-protection" className="text-[var(--primary)] hover:underline">
-              {t('guides.acca_refund_link')}
-            </Link>
-            .
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('how_it_works.faq_title')}</h2>
-          <dl className="mt-3 space-y-4">
-            {faqs.map((faq) => (
-              <div key={faq.question}>
-                <dt className="text-sm font-semibold">{faq.question}</dt>
-                <dd className="mt-1 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
+        <GuideStack>
+          <GuidePanel>
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">{t('guides.acca_intro')}</p>
+          </GuidePanel>
+          <GuideStep index="1" title={t('guides.acca_legs_h')}>
+            <p>{t('guides.acca_legs_body')}</p>
+          </GuideStep>
+          <GuideStep index="2" title={t('guides.acca_win_h')}>
+            <p>{t('guides.acca_win_body')}</p>
+          </GuideStep>
+          <GuideStep index="3" title={t('guides.acca_void_h')}>
+            <p>{t('guides.acca_void_body')}</p>
+          </GuideStep>
+          <GuideStep index="4" title={t('guides.acca_refund_h')}>
+            <p>
+              {t('guides.acca_refund_before')}{' '}
+              <Link href="/guides/purchase-protection">{t('guides.acca_refund_link')}</Link>.
+            </p>
+          </GuideStep>
+          <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+        </GuideStack>
       </main>
       <AppFooter />
     </div>

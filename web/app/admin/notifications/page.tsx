@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { Input, fieldControlClassName } from '@/components/ui/Input';
 
@@ -104,10 +105,7 @@ export default function AdminNotificationsPage() {
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Notifications Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">View and manage all platform notifications.</p>
-        </div>
+        <AdminPageHeader title="Notifications" tagline="View and manage all platform notifications." />
 
         <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
           <div className="w-full sm:flex-1 sm:min-w-[160px]">

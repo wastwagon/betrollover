@@ -238,16 +238,16 @@ export default function MyPurchasesPage() {
 
           {!loading && isSubscriptionsEnabled() && vipSubscriptions.length > 0 && (
             <section
-              className="mb-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-sm min-w-0 max-w-full"
+              className="mb-6 ios-grouped-section p-4 sm:p-5 min-w-0 max-w-full"
               aria-label={t('my_purchases.vip_heading')}
             >
-              <h2 className="text-base font-semibold text-[var(--text)] mb-1">{t('my_purchases.vip_heading')}</h2>
-              <p className="text-xs text-[var(--text-muted)] mb-3">{t('my_purchases.vip_note')}</p>
-              <ul className="space-y-2 mb-3">
+              <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text)] mb-1">{t('my_purchases.vip_heading')}</h2>
+              <p className="text-[12px] text-[var(--text-muted)] mb-3">{t('my_purchases.vip_note')}</p>
+              <ul className="divide-y divide-[var(--separator)] mb-3 -mx-1">
                 {vipSubscriptions.map((s) => (
                   <li
                     key={s.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm border-b border-[var(--border)] last:border-0 pb-2 last:pb-0 min-w-0"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm py-2.5 px-1 min-w-0"
                   >
                     <span className="font-medium text-[var(--text)] min-w-0 break-words">{s.package?.name ?? 'VIP'}</span>
                     <span className="text-[var(--text-muted)] text-xs sm:text-sm min-w-0 sm:text-end break-words">
@@ -299,10 +299,10 @@ export default function MyPurchasesPage() {
               ].map(({ labelKey, value, color }) => (
                 <div
                   key={labelKey}
-                  className="rounded-xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm text-center"
+                  className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-4 text-center"
                 >
-                  <p className={`text-lg font-semibold ${color}`}>{value}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5 font-medium">{t(labelKey)}</p>
+                  <p className={`text-[22px] font-semibold tracking-tight tabular-nums ${color}`}>{value}</p>
+                  <p className="text-[11px] text-[var(--text-tertiary)] mt-1 font-semibold uppercase tracking-[0.08em]">{t(labelKey)}</p>
                 </div>
               ))}
             </div>
@@ -347,8 +347,8 @@ export default function MyPurchasesPage() {
                   onClick={() => setSportFilter(key)}
                   className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     sportFilter === key
-                      ? 'bg-[var(--primary)] text-white shadow-sm'
-                      : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]'
+                      ? 'bg-[var(--primary)] text-white'
+                      : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
                   }`}
                 >
                   {t(labelKey)}
@@ -368,7 +368,7 @@ export default function MyPurchasesPage() {
           )}
 
           {!loading && purchases.length === 0 && (!isSubscriptionsEnabled() || vipSubscriptions.length === 0) && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+            <div className="ios-grouped-section">
               <EmptyState
                 title={t('my_purchases.no_purchases')}
                 description={t('my_purchases.no_purchases_desc')}
@@ -379,14 +379,14 @@ export default function MyPurchasesPage() {
                 {isSubscriptionsEnabled() ? (
                   <Link
                     href="/subscriptions/marketplace"
-                    className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                    className="inline-flex justify-center items-center px-4 py-2 rounded-full bg-[var(--fill-secondary)] text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                   >
                     {t('my_purchases.explore_vip_marketplace')}
                   </Link>
                 ) : null}
                 <Link
                   href="/guides/evaluate-tipsters"
-                  className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  className="inline-flex justify-center items-center px-4 py-2 rounded-full bg-[var(--fill-secondary)] text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                 >
                   {t('my_purchases.learn_before_buying')}
                 </Link>
@@ -395,7 +395,7 @@ export default function MyPurchasesPage() {
           )}
 
           {!loading && isSubscriptionsEnabled() && purchases.length === 0 && vipSubscriptions.length > 0 && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] mb-6">
+            <div className="ios-grouped-section mb-6">
               <EmptyState
                 title={t('my_purchases.no_pick_purchases')}
                 description={t('my_purchases.no_pick_purchases_desc')}
@@ -405,7 +405,7 @@ export default function MyPurchasesPage() {
               <div className="pb-8 px-4 sm:px-8 -mt-6 flex justify-center">
                 <Link
                   href="/subscriptions"
-                  className="inline-flex justify-center items-center px-4 py-2 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                  className="inline-flex justify-center items-center px-4 py-2 rounded-full bg-[var(--fill-secondary)] text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
                 >
                   {t('my_purchases.open_my_subscriptions')}
                 </Link>
@@ -414,7 +414,7 @@ export default function MyPurchasesPage() {
           )}
 
           {!loading && purchases.length > 0 && filtered.length === 0 && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+            <div className="ios-grouped-section">
               <EmptyState
                 title={t('my_purchases.no_filter_match')}
                 description={t('my_purchases.no_filter_match_desc')}

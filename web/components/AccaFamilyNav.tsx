@@ -13,7 +13,8 @@ const JOBS: { id: AccaJob; href: string; labelKey: TranslationKey; shortKey: Tra
 ];
 
 /**
- * Three Acca products stay separate. This nav only labels the job on each fold.
+ * Marketplace browse + Accumulator Builder + Rollover stay separate.
+ * Short labels: Browse / Acca / Rollover.
  */
 export function AccaFamilyNav({ current }: { current: AccaJob }) {
   const t = useT();

@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { GuideFaqList, GuidePanel, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
@@ -54,43 +55,30 @@ export default async function FreeAndPaidPicksGuidePage() {
         />
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="free" />
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.free_intro')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.free_free_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.free_free_body')}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.free_paid_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.free_paid_body')}{' '}
-            <Link href="/guides/purchase-protection" className="text-[var(--primary)] hover:underline">
-              {t('guides.acca_refund_link')}
-            </Link>
-            .
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.free_record_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.free_record_body')}{' '}
-            <Link href="/guides/read-tipster-stats" className="text-[var(--primary)] hover:underline">
-              {t('guides.stats_card_title')}
-            </Link>
-            .
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.free_price_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('guides.free_price_body', vars)}</p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('how_it_works.faq_title')}</h2>
-          <dl className="mt-3 space-y-4">
-            {faqs.map((faq) => (
-              <div key={faq.question}>
-                <dt className="text-sm font-semibold">{faq.question}</dt>
-                <dd className="mt-1 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
+        <GuideStack>
+          <GuidePanel>
+            <p className="text-[15px] leading-relaxed text-[var(--text-muted)]">{t('guides.free_intro')}</p>
+          </GuidePanel>
+          <GuideStep index="1" title={t('guides.free_free_h')}>
+            <p>{t('guides.free_free_body')}</p>
+          </GuideStep>
+          <GuideStep index="2" title={t('guides.free_paid_h')}>
+            <p>
+              {t('guides.free_paid_body')}{' '}
+              <Link href="/guides/purchase-protection">{t('guides.acca_refund_link')}</Link>.
+            </p>
+          </GuideStep>
+          <GuideStep index="3" title={t('guides.free_record_h')}>
+            <p>
+              {t('guides.free_record_body')}{' '}
+              <Link href="/guides/read-tipster-stats">{t('guides.stats_card_title')}</Link>.
+            </p>
+          </GuideStep>
+          <GuideStep index="4" title={t('guides.free_price_h')}>
+            <p>{t('guides.free_price_body', vars)}</p>
+          </GuideStep>
+          <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+        </GuideStack>
       </main>
       <AppFooter />
     </div>

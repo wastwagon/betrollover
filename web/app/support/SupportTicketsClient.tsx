@@ -113,14 +113,11 @@ function SupportTicketsInner() {
 
   if (!authed && !loading) {
     return (
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 max-w-3xl">
-        <h2 className="text-base font-semibold text-[var(--text)]">{t('support.tickets_sign_in_h')}</h2>
-        <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('support.tickets_sign_in_body')}</p>
+      <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 sm:p-6 max-w-3xl">
+        <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{t('support.tickets_sign_in_h')}</h2>
+        <p className="mt-2 text-[15px] text-[var(--text-muted)] leading-relaxed">{t('support.tickets_sign_in_body')}</p>
         <p className="mt-4">
-          <Link
-            href={loginRedirectUrl('/support')}
-            className="font-semibold text-[var(--primary)] hover:underline"
-          >
+          <Link href={loginRedirectUrl('/support')} className="font-semibold text-[var(--primary)]">
             {t('support.tickets_sign_in_cta')}
           </Link>
         </p>
@@ -131,11 +128,11 @@ function SupportTicketsInner() {
   return (
     <div className="max-w-3xl">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-base font-semibold text-[var(--text)]">{t('support.your_tickets_h')}</h2>
+        <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{t('support.your_tickets_h')}</h2>
         <Button
           type="button"
           variant={showForm ? 'secondary' : 'primary'}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto min-h-[44px]"
           onClick={() => {
             setShowForm(!showForm);
             setSuccess(false);
@@ -153,8 +150,8 @@ function SupportTicketsInner() {
       ) : null}
 
       {showForm ? (
-        <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 shadow-sm mb-8">
-          <h3 className="text-sm font-semibold text-[var(--text)] mb-4">{t('support.new_support_ticket')}</h3>
+        <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-5 sm:p-6 mb-8">
+          <h3 className="text-[15px] font-semibold text-[var(--text)] mb-4">{t('support.new_support_ticket')}</h3>
           <div className="space-y-4">
             <div className="flex flex-col gap-1.5 min-w-0 w-full">
               <label htmlFor="support-category" className="text-xs font-medium text-[var(--text-muted)]">
@@ -206,33 +203,30 @@ function SupportTicketsInner() {
       ) : null}
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="ios-grouped-section overflow-hidden divide-y divide-[var(--separator)]">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 rounded-2xl bg-[var(--card)] animate-pulse" />
+            <div key={i} className="h-[4.5rem] skeleton bg-[var(--card)]" />
           ))}
         </div>
       ) : tickets.length === 0 ? (
-        <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-10 text-center">
-          <p className="font-display font-semibold text-[var(--text)]">{t('support.no_tickets_yet')}</p>
-          <p className="text-sm text-[var(--text-muted)] mt-1">{t('support.open_ticket_above')}</p>
+        <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] px-5 py-10 text-center">
+          <p className="font-semibold text-[17px] text-[var(--text)]">{t('support.no_tickets_yet')}</p>
+          <p className="text-[14px] text-[var(--text-muted)] mt-1.5">{t('support.open_ticket_above')}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="ios-grouped-section overflow-hidden divide-y divide-[var(--separator)]">
           {tickets.map((ticket) => (
-            <div key={ticket.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 mb-2">
+            <div key={ticket.id} className="bg-[var(--card)] px-4 py-3.5 sm:px-5 sm:py-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-[var(--text)] truncate">{ticket.subject}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  <p className="text-[15px] font-semibold text-[var(--text)] truncate">{ticket.subject}</p>
+                  <p className="text-[12px] text-[var(--text-muted)] mt-1">
                     {t(`support.cat_${ticket.category}` as 'support.cat_general')}
                     {ticket.relatedCouponId ? (
                       <>
                         {' '}
                         ·{' '}
-                        <Link
-                          href={`/coupons/${ticket.relatedCouponId}`}
-                          className="text-[var(--primary)] hover:underline"
-                        >
+                        <Link href={`/coupons/${ticket.relatedCouponId}`} className="text-[var(--primary)] font-medium">
                           {t('support.pick_id', { id: String(ticket.relatedCouponId) })}
                         </Link>
                       </>
@@ -246,15 +240,15 @@ function SupportTicketsInner() {
                   </p>
                 </div>
                 <span
-                  className={`self-start sm:self-auto flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold capitalize ${STATUS_STYLE[ticket.status] ?? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}
+                  className={`self-start sm:self-auto flex-shrink-0 text-[11px] px-2.5 py-1 rounded-full font-semibold capitalize ${STATUS_STYLE[ticket.status] ?? 'bg-[var(--fill-secondary)] text-[var(--text-muted)]'}`}
                 >
                   {ticket.status.replace('_', ' ')}
                 </span>
               </div>
               {ticket.adminResponse ? (
-                <div className="mt-3 rounded-xl bg-[var(--primary-light)] border border-[var(--primary)]/20 p-3">
-                  <p className="text-xs font-semibold text-[var(--primary)] mb-1">{t('support.admin_response')}</p>
-                  <p className="text-sm text-[var(--text)]">{ticket.adminResponse}</p>
+                <div className="mt-3 rounded-xl bg-[var(--primary-light)]/70 border border-[var(--primary)]/15 px-3 py-2.5">
+                  <p className="text-[11px] font-semibold text-[var(--primary)] mb-1">{t('support.admin_response')}</p>
+                  <p className="text-[14px] text-[var(--text)] leading-relaxed">{ticket.adminResponse}</p>
                 </div>
               ) : null}
             </div>

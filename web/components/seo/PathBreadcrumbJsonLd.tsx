@@ -5,7 +5,7 @@ import { getLocale } from '@/lib/i18n';
 
 const LABEL: Record<string, string> = {
   about: 'About',
-  'acca-generator': 'Acca generator',
+  'acca-generator': 'Accumulator Builder',
   'btts-predictions': 'Both teams to score predictions',
   'buy-football-tips': 'Buy football tips',
   contact: 'Contact',
@@ -15,6 +15,8 @@ const LABEL: Record<string, string> = {
   'football-tips-ghana': 'Football tips Ghana',
   'ghana-premier-league-predictions': 'Ghana Premier League predictions',
   guides: 'Guides',
+  'how-accumulators-settle': 'How accumulators settle',
+  'purchase-protection': 'Purchase protection',
   'how-it-works': 'How it works',
   leaderboard: 'Leaderboard',
   learn: 'Learn',

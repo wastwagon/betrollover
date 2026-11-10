@@ -110,7 +110,7 @@ function DiscoverContent() {
         <DiscoverFamilyNav current="hub" />
 
         {/* SEO-rich static content */}
-        <section className="mb-8 rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 md:p-8 min-w-0">
+        <section className="mb-8 rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-6 md:p-8 min-w-0">
           <h2 className="text-base font-semibold text-[var(--text)] mb-3">{t('discover.hub_title')}</h2>
           <p className="text-[var(--text-muted)] leading-relaxed mb-4">
             {t('discover.hub_desc')}
@@ -118,7 +118,7 @@ function DiscoverContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-w-0">
             <Link
               href="/news"
-              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors group"
+              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--separator)] hover:border-[var(--primary)]/50 transition-colors group"
             >
               <h3 className="font-semibold text-[var(--text)] mb-2 inline-flex items-center gap-2">
                 <IconMegaphone className="w-4 h-4 text-[var(--primary)]" />
@@ -129,7 +129,7 @@ function DiscoverContent() {
             </Link>
             <Link
               href="/guides"
-              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors group"
+              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--separator)] hover:border-[var(--primary)]/50 transition-colors group"
             >
               <h3 className="font-semibold text-[var(--text)] mb-2 inline-flex items-center gap-2">
                 <IconClipboard className="w-4 h-4 text-[var(--primary)]" />
@@ -151,7 +151,7 @@ function DiscoverContent() {
             </Link>
             <Link
               href="/how-it-works#faq"
-              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] hover:border-[var(--primary)]/50 transition-colors group"
+              className="p-4 rounded-xl bg-[var(--bg)]/50 border border-[var(--separator)] hover:border-[var(--primary)]/50 transition-colors group"
             >
               <h3 className="font-semibold text-[var(--text)] mb-2 inline-flex items-center gap-2">
                 <IconShield className="w-4 h-4 text-[var(--primary)]" />
@@ -163,18 +163,18 @@ function DiscoverContent() {
           </div>
 
           {/* More — routes that are not News/Guides tabs or footer legal */}
-          <div className="mt-6 pt-6 border-t border-[var(--border)]">
+          <div className="mt-6 pt-6 border-t border-[var(--separator)]">
             <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('discover.more')}</h3>
             <div className="flex flex-wrap gap-2">
-              <Link href="/community" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
+              <Link href="/community" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--separator)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
                 <IconChat className="w-4 h-4" />
                 {t('nav.community')}
               </Link>
-              <Link href="/about" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
+              <Link href="/about" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--separator)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
                 <IconUsers className="w-4 h-4" />
                 {t('nav.about')}
               </Link>
-              <Link href="/responsible-gambling" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--border)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
+              <Link href="/responsible-gambling" className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg)]/50 border border-[var(--separator)] text-sm font-medium text-[var(--text)] hover:border-[var(--primary)]/50 hover:text-[var(--primary)] transition-colors">
                 <IconShield className="w-4 h-4" />
                 {t('resp.headline')}
               </Link>
@@ -194,7 +194,7 @@ function DiscoverContent() {
                 className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                   activeSport === sfKey
                     ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--text)]'
+                    : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--separator)] hover:border-[var(--primary)] hover:text-[var(--text)]'
                 }`}
               >
                 <span>{SPORT_ICONS[sfKey]}</span><span>{getContentSportLabel(t, sfKey)}</span>
@@ -298,7 +298,7 @@ function NewsTab({ sport }: { sport: ContentSport }) {
             className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
               activeCategory === tab.key
                 ? 'bg-[var(--primary)] text-white'
-                : 'bg-[var(--card)] border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--primary)]/50'
+                : 'bg-[var(--card)] border border-[var(--separator)] text-[var(--text-muted)] hover:border-[var(--primary)]/50'
             }`}
           >
             {tab.label}
@@ -310,11 +310,11 @@ function NewsTab({ sport }: { sport: ContentSport }) {
       {loading ? (
         <div className="space-y-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 rounded-xl bg-[var(--card)] border border-[var(--border)] skeleton" />
+            <div key={i} className="h-32 rounded-xl bg-[var(--card)] border border-[var(--separator)] skeleton" />
           ))}
         </div>
       ) : articles.length === 0 ? (
-        <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
+        <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-12 text-center">
           <h3 className="text-base font-semibold text-[var(--text)] mb-2">{t('news.no_articles')}</h3>
           <p className="text-[var(--text-muted)] max-w-md mx-auto mb-4">
             {sport ? t('news.no_articles_filtered') : t('news.no_articles_default')}
@@ -336,7 +336,7 @@ function NewsTab({ sport }: { sport: ContentSport }) {
               <Link
                 key={a.id}
                 href={`/news/${a.slug}`}
-                className="block rounded-2xl bg-[var(--card)] border border-[var(--border)] hover:border-[var(--primary)]/30 overflow-hidden transition-all card-hover"
+                className="block rounded-2xl bg-[var(--card)] border border-[var(--separator)] hover:border-[var(--primary)]/30 overflow-hidden transition-all card-hover"
               >
                 <div className="flex flex-col sm:flex-row">
                   {a.imageUrl && (
@@ -395,7 +395,7 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
     return (
       <div className="space-y-8">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-48 rounded-xl bg-[var(--card)] border border-[var(--border)] skeleton" />
+          <div key={i} className="h-48 rounded-xl bg-[var(--card)] border border-[var(--separator)] skeleton" />
         ))}
       </div>
     );
@@ -404,13 +404,13 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
   if (visibleCategories.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="rounded-xl border border-[var(--separator)] bg-[var(--card)] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-sm text-[var(--text-muted)] min-w-0">{t('discover.library_vs_howtos')}</p>
           <Link href="/guides" className="text-sm font-semibold text-[var(--primary)] hover:underline shrink-0">
             {t('discover.open_howtos')}
           </Link>
         </div>
-      <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-12 text-center">
+      <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-12 text-center">
         {sportMeta ? (
           <>
             <h3 className="text-base font-semibold text-[var(--text)] mb-2">
@@ -444,7 +444,7 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
 
   return (
     <section className="space-y-10">
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="rounded-xl border border-[var(--separator)] bg-[var(--card)] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-sm text-[var(--text-muted)] min-w-0">{t('discover.library_vs_howtos')}</p>
         <Link href="/guides" className="text-sm font-semibold text-[var(--primary)] hover:underline shrink-0">
           {t('discover.open_howtos')}
@@ -459,7 +459,7 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
         </div>
       )}
       {visibleCategories.map((cat) => (
-        <div key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 min-w-0">
+        <div key={cat.id} className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-6 min-w-0">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-6 min-w-0">
             <span className="px-3 py-1 rounded-lg text-sm font-medium bg-[var(--primary-light)] text-[var(--primary)] w-fit">
               {getLevelLabel(t, cat.level)}
@@ -477,7 +477,7 @@ function GuidesTab({ sport }: { sport: ContentSport }) {
                 <Link
                   key={item.id}
                   href={`/resources/${cat.slug}/${item.slug}`}
-                  className="block p-4 rounded-xl border border-[var(--border)] hover:border-[var(--primary)]/30 hover:bg-[var(--primary-light)]/20 transition-all"
+                  className="block p-4 rounded-xl border border-[var(--separator)] hover:border-[var(--primary)]/30 hover:bg-[var(--primary-light)]/20 transition-all"
                 >
                   <span className="text-xs font-medium text-[var(--primary)]">
                     {getTypeLabel(t, item.type)}

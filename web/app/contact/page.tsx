@@ -67,7 +67,7 @@ export default async function ContactPage() {
                 <a
                   key={label}
                   href={href}
-                  className="group flex flex-col gap-1 p-5 rounded-xl border border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)] transition-colors"
+                  className="group flex flex-col gap-1 p-5 rounded-xl border border-[var(--separator)] bg-[var(--card)] hover:border-[var(--primary)] transition-colors"
                 >
                   <Icon className="w-5 h-5 text-[var(--primary)] mb-1" />
                   <span className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">

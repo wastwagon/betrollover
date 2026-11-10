@@ -50,7 +50,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
     tagline:
       'Follow GPL fixtures through tipster picks with public settled records — built for Ghana users who want predictions, not a bookmaker account on BetRollover.',
     intro: [
-      'The Ghana Premier League sits at the centre of local football conversation: weekend kickoffs, title races, relegation fights, and cup overlaps. Fans looking for GPL predictions often land on Telegram forwards with no settled history. BetRollover gives tipsters a place to publish Ghana Premier League tips alongside other leagues, with win rate and ROI calculated from official settlement — not screenshots.',
+      'The Ghana Premier League sits at the centre of local football conversation: weekend kickoffs, title races, relegation fights, and cup overlaps. Fans looking for GPL predictions often land on Telegram forwards with no settled history. BetRollover gives tipsters a place to publish Ghana Premier League tips alongside other leagues, with win rate and profit per GHS 100 bet calculated from official tip settlement — not screenshots.',
       'We are based in Ghana. Wallets support GHS and the deposit methods described in-product, including Mobile Money where enabled, so you can buy tips without converting everything through a foreign card processor. Buying a tip is not placing a bet. If you later use SportyBet or another bookmaker, that stake stays outside our purchase-protection wallet refund.',
       'This page is your GPL hub: how tipsters cover domestic matches, how to read standings snippets on match pages, and where today’s broader football predictions sit when the international calendar is louder than the local one.',
     ],
@@ -58,7 +58,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         heading: 'What a GPL prediction looks like here',
         paragraphs: [
-          'A tipster lists selections — match result, double chance (two of three results win), goals lines, both teams to score, or multi-match picks that include GPL legs. Free picks build a public trail. Paid picks show a price and purchase protection. After full time, the platform marks won, lost, or cancelled from results feeds. Picks waiting for a result do not inflate profit per GHS 100 bet.',
+          'A tipster lists selections — match result, double chance (two of three results win), goals lines, both teams to score, or accumulators that include GPL legs. Free picks build a public trail. Paid picks show a price and purchase protection. After full time, the platform marks won, lost, or cancelled from results feeds. Picks waiting for a result do not inflate profit per GHS 100 bet.',
           'Match pages for GPL fixtures show teams, league name, kickoff, and standings snippets when we have table data. Related public predictions for that fixture appear below the scoreboard so you can compare tipsters on the same game.',
         ],
         links: [
@@ -74,7 +74,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
           'Francophone and Nigerian visitors follow the same tip pages. GPL content remains useful whenever tipsters publish Accra, Kumasi, or Cape Coast kickoffs with transparent stats.',
         ],
         links: [
-          { href: '/football-tips-ghana', label: 'Football tips Ghana hub' },
+          { href: '/football-tips-ghana', label: 'Football predictions in Ghana' },
           { href: '/about', label: 'About / company' },
         ],
       },
@@ -82,7 +82,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
         heading: 'How tipsters are checked',
         paragraphs: [
           'Anyone can start with free picks. Charging for marketplace tips requires minimum result-confirmed profit per GHS 100 bet and win rate set by the platform. Leaderboard ranking mixes recent form with that profit figure — a high-profit tipster with thin form can sit below a steadier profile. Read the ranking guide before assuming position equals “best tip.”',
-          'Verified badges mean account checks. Platform desks are labelled AI tipster. Neither label means Ghana Premier League picks will win. Domestic leagues can be hard to predict — size any external stake carefully.',
+          'Verified badges mean account checks. Platform-run accounts are labelled AI tipster. Neither label means Ghana Premier League picks will win. Domestic leagues can be hard to predict — size any external stake carefully.',
         ],
         links: [
           { href: '/guides/leaderboard-ranking', label: 'Leaderboard ranking' },
@@ -93,7 +93,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         heading: 'More prediction angles',
         paragraphs: [
-          'When you care about today’s full card, both teams to score, or over 2.5 goals — including GPL legs inside multis — use the market hubs. Settled archive links let you audit weekend tips after the fact.',
+          'When you care about today’s full card, both teams to score, or over 2.5 goals — including GPL legs inside accumulators — use the market hubs. Settled archive links let you audit weekend tips after the fact.',
         ],
         links: [
           { href: '/football-predictions-today', label: 'Predictions today' },
@@ -122,11 +122,11 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         question: 'Where do results appear after the match?',
         answer:
-          'On the pick page, tipster profile, track-record views, and the settled archive once settlement finishes.',
+          'On the pick page, tipster profile, track-record views, and the settled archive once the result is confirmed.',
       },
     ],
     ctaPrimary: { href: '/marketplace?sport=football', label: 'Browse football tips' },
-    ctaSecondary: { href: '/football-tips-ghana', label: 'Ghana tips hub' },
+    ctaSecondary: { href: '/football-tips-ghana', label: 'Football predictions in Ghana' },
     disclaimer: DISCLAIMER,
     liveHeading: 'Recent settled football picks',
     liveEmpty: 'No settled picks to show yet.',
@@ -151,7 +151,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
     tagline:
       'See today’s football tips from tipsters who publish on BetRollover — with kickoff context, public stats, and purchase protection on paid marketplace picks.',
     intro: [
-      '“Predictions today” should mean more than a long list of logos. On BetRollover, today’s football tips are tied to tipster accounts, prices, and settlement rules you can read before kickoff. Browse the marketplace, open match pages for teams and league standings snippets, and compare settled history when two tipsters disagree on the same fixture.',
+      '“Predictions today” should mean more than a long list of logos. On BetRollover, today’s football tips are tied to tipster accounts, prices, and refund rules you can read before kickoff. Browse the marketplace, open match pages for teams and league standings snippets, and compare settled history when two tipsters disagree on the same fixture.',
       'Coverage spans major European leagues, African competitions including the Ghana Premier League, and cups that fall on midweek cards. AI tipsters and human tipsters are labelled differently. We never market sure odds. If a tipster’s copy sounds like a guarantee, treat that as a red flag against our rules.',
       'Use this hub as the daily entry point: how “today” filters work, how free reveals differ from paid unlocks, and which sibling pages cover both teams to score and over 2.5 goals when you are shopping by market.',
     ],
@@ -160,7 +160,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
         heading: 'Finding today’s picks',
         paragraphs: [
           'Start on the marketplace and use the day filter for today when you want kickoffs on the current calendar date. Home and live-scores surfaces also highlight matches with related picks. Each public match page lists predictions linked to that fixture so you are not hunting only by tipster name.',
-          'VIP plans deliver a stream of VIP picks over a paid period rather than a single tip. Marketplace singles and multi-match picks remain purchase-protected per pick. Read the buy page for plan length, price in GHS, and the VIP refund rule.',
+          'VIP plans deliver a stream of VIP picks over a paid period rather than a single tip. Marketplace singles and accumulators remain purchase-protected per pick. Read the buy page for plan length, price in GHS, and the VIP refund rule.',
         ],
         links: [
           { href: '/marketplace', label: 'Marketplace' },
@@ -203,7 +203,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         question: 'Do tips waiting for a result count on the leaderboard?',
         answer:
-          'No. Only result-confirmed won/lost results feed win rate and profit per GHS 100 bet. Tips waiting for a result wait for settlement.',
+          'No. Only result-confirmed won/lost results feed win rate and profit per GHS 100 bet. Tips waiting for a result wait until the result is confirmed.',
       },
       {
         question: 'Can I see tips for tomorrow as well?',
@@ -240,9 +240,9 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
     label: 'Markets',
     title: 'Both teams to score predictions',
     tagline:
-      'Find tipster picks that target both teams to score — with transparent settlement, not “GG banker” hype.',
+      'Find tipster picks that target both teams to score — with transparent tip settlement, not empty “sure tip” claims.',
     intro: [
-      'Both teams to score is one of the most searched football tip markets. It looks simple: each side finds the net. In practice, tipsters disagree on open games, derbies, and high-press teams. BetRollover lets those tipsters publish both-teams-to-score selections inside singles or multi-match picks, then settles them from official scores so buyers can audit the record.',
+      'Both teams to score is one of the most searched football tip markets. It looks simple: each side finds the net. In practice, tipsters disagree on open games, derbies, and high-press teams. BetRollover lets those tipsters publish both-teams-to-score selections inside singles or accumulators, then settles them from official scores so buyers can audit the record.',
       'We do not brand these tips as locks or sure wins. Language like that is banned. What you get instead is a price (or a free listing) and public profit per GHS 100 bet. Paid marketplace both-teams-to-score picks use the same purchase protection as other paid tips: lose the pick, get the tip price back in your wallet.',
       'Use this page to understand how both teams to score appears in our product, how to combine it with match previews, and how it sits beside over 2.5 goals when tipsters stack goal markets. Ghana, Nigeria, Kenya, South Africa, and Francophone users all browse the same football marketplace with wallet options where enabled.',
     ],
@@ -250,19 +250,19 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         heading: 'How tipsters list both teams to score',
         paragraphs: [
-          'A pick may be a single both-teams-to-score yes/no line, or a multi that includes those legs with match results or totals. Read every leg before you buy. Accumulator settlement fails if any non-cancelled leg loses — the purchase-protection guide explains refunds for those cases.',
+          'A pick may be a single both-teams-to-score yes/no line, or an accumulator that includes those legs with match results or totals. Read every leg before you buy. An accumulator loses if any non-cancelled leg loses — the purchase-protection guide explains refunds for those cases.',
           'Titles on modern listings prefer readable match-based names instead of opaque ids. Open the pick page for full selections once revealed. Related picks on a match page help you see whether several tipsters agree on both teams to score for the same fixture.',
         ],
         links: [
           { href: '/marketplace?sport=football', label: 'Football marketplace' },
-          { href: '/guides/accumulator-settlement', label: 'Accumulator settlement' },
+          { href: '/guides/how-accumulators-settle', label: 'How accumulators settle' },
           { href: '/guides/purchase-protection', label: 'Purchase protection' },
         ],
       },
       {
         heading: 'Match context for both teams to score',
         paragraphs: [
-          'On match pages you get teams, league, kickoff, and standings snippets (played, wins, draws, losses, points) when available. That is not a full expected-goals model — it is enough to ground the tip before kickoff. Live scores update while the match is in play; settlement follows full time.',
+          'On match pages you get teams, league, kickoff, and standings snippets (played, wins, draws, losses, points) when available. That is not a full expected-goals model — it is enough to ground the tip before kickoff. Live scores update while the match is in play; tips settle after full time.',
           'If you also care about total goals, cross-check the over 2.5 hub. Both teams to score yes and over 2.5 often correlate but they are not the same market. Tipsters who confuse them will show it in their result-confirmed records.',
         ],
         links: [
@@ -280,7 +280,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
         links: [
           { href: '/tipsters', label: 'Tipsters' },
           { href: '/leaderboard', label: 'Leaderboard' },
-          { href: '/football-tips-ghana', label: 'Ghana tips hub' },
+          { href: '/football-tips-ghana', label: 'Football predictions in Ghana' },
           { href: '/coupons/archive', label: 'Settled archive' },
         ],
       },
@@ -333,7 +333,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
     tagline:
       'Tipster predictions on over 2.5 total goals — settled in public, priced clearly, never sold as guaranteed.',
     intro: [
-      'Over 2.5 goals is a staple total-goals market: the match needs at least three goals for the selection to win (unless the tipster chose a different line — always read the pick). Tipsters use it in singles, two-match picks, and longer multi-match picks. On BetRollover those tips sit next to the tipster’s full record so you can see how often goal-heavy calls actually land.',
+      'Over 2.5 goals is a staple total-goals market: the match needs at least three goals for the selection to win (unless the tipster chose a different line — always read the pick). Tipsters use it in singles, two-fold picks, and longer accumulators. On BetRollover those tips sit next to the tipster’s full record so you can see how often goal-heavy calls actually land.',
       'Search traffic for over 2.5 is full of soft claims. Our rules reject sure-win marketing. A paid over 2.5 marketplace pick still carries purchase protection on the tip price. Your bookmaker stake, if any, is separate. That split matters for Ghana wallet users and for buyers elsewhere who bet off-platform.',
       'This hub explains how over 2.5 listings work here, how they relate to both teams to score, how match pages supply kickoff and table context, and where to go for today’s card or Ghana Premier League angles that include goals markets.',
     ],
@@ -342,11 +342,11 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
         heading: 'Reading an over 2.5 tip',
         paragraphs: [
           'Confirm the exact market line on the pick. Some picks mix over 2.5 with team totals or first-half goals. Odds and leg count are shown on cards before purchase. After unlock, selections appear — not only inside images — so you can read them carefully.',
-          'Settlement uses official full-time totals for the selected market. Cancelled-leg rules follow the platform multi-match settlement guide. Tips waiting for a result do not count toward profit per GHS 100 bet until they settle.',
+          'Result checking uses official full-time totals for the selected market. Cancelled-leg rules follow the platform accumulator result-checking guide. Tips waiting for a result do not count toward profit per GHS 100 bet until they settle.',
         ],
         links: [
           { href: '/marketplace?sport=football', label: 'Football marketplace' },
-          { href: '/guides/accumulator-settlement', label: 'Settlement guide' },
+          { href: '/guides/how-accumulators-settle', label: 'How accumulators settle' },
           { href: '/buy-football-tips', label: 'VIP and paid tips' },
         ],
       },
@@ -377,7 +377,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
           'Ghana hub and GPL pages help local fans. About and support pages state we are not a bookmaker and how to reach OceanCyber-operated BetRollover support.',
         ],
         links: [
-          { href: '/football-tips-ghana', label: 'Football tips Ghana' },
+          { href: '/football-tips-ghana', label: 'Football predictions in Ghana' },
           { href: '/ghana-premier-league-predictions', label: 'GPL predictions' },
           { href: '/support', label: 'Support' },
         ],
@@ -397,7 +397,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         question: 'Does purchase protection cover over 2.5 accumulators?',
         answer:
-          'Eligible paid marketplace picks refund the tip price if the pick settles lost or void, including multis under the published accumulator rules. VIP plans use a different fee refund rule.',
+          'Eligible paid marketplace picks refund the tip price if the pick loses or is cancelled after the result is confirmed, including accumulators under the published rules. VIP plans use a different fee refund rule.',
       },
       {
         question: 'Where can I see today’s over 2.5 ideas?',

@@ -104,17 +104,20 @@ interface Coupon {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const SPORT_META: Record<string, { icon: string; labelKey: string; color: string }> = {
-  Football: { icon: '⚽', labelKey: 'nav.football', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  Basketball: { icon: '🏀', labelKey: 'nav.basketball', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  Rugby: { icon: '🏉', labelKey: 'nav.rugby', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  MMA: { icon: '🥊', labelKey: 'nav.mma', color: 'bg-red-100 text-red-800 border-red-200' },
-  Volleyball: { icon: '🏐', labelKey: 'nav.volleyball', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  Hockey: { icon: '🏒', labelKey: 'nav.hockey', color: 'bg-cyan-100 text-cyan-800 border-cyan-200' },
-  'American Football': { icon: '🏈', labelKey: 'nav.american_football', color: 'bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25' },
-  Tennis: { icon: '🎾', labelKey: 'nav.tennis', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  'Multi-Sport': { icon: '🌍', labelKey: 'pick_detail.sport_multi', color: 'bg-teal-100 text-teal-800 border-teal-200' },
+const SPORT_META: Record<string, { labelKey: string }> = {
+  Football: { labelKey: 'nav.football' },
+  Basketball: { labelKey: 'nav.basketball' },
+  Rugby: { labelKey: 'nav.rugby' },
+  MMA: { labelKey: 'nav.mma' },
+  Volleyball: { labelKey: 'nav.volleyball' },
+  Hockey: { labelKey: 'nav.hockey' },
+  'American Football': { labelKey: 'nav.american_football' },
+  Tennis: { labelKey: 'nav.tennis' },
+  'Multi-Sport': { labelKey: 'pick_detail.sport_multi' },
 };
+
+const QUIET_CHIP =
+  'inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium bg-[var(--fill-secondary)] text-[var(--text-muted)] border border-[var(--separator)]';
 
 function legResultLabel(
   result: string,
@@ -247,7 +250,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
 
       {/* Write review form — only if purchased + settled + not already reviewed */}
       {isPurchased && isSettled && myReview && !myReview.reviewed && (
-        <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-5 shadow-sm">
+        <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-5 mb-5 shadow-sm">
           <p className="text-sm font-semibold text-[var(--text)] mb-3">{t('pick_detail.leave_review_title')}</p>
           <StarRow rating={rating} interactive onChange={setRating} />
           <div className="mt-3">
@@ -281,7 +284,7 @@ function ReviewsSection({ couponId, isPurchased, isSettled }: { couponId: number
       ) : (
         <div className="space-y-3">
           {data.items.map((rev) => (
-            <div key={rev.id} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4 shadow-sm">
+            <div key={rev.id} className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-4 shadow-sm">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <StarRow rating={rev.rating} />
@@ -533,7 +536,7 @@ export default function CouponDetailPage({
         >
           ← {t('nav.marketplace')}
         </Link>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">
+        <h1 className="text-[1.65rem] sm:text-[2rem] font-semibold text-[var(--text)] mb-5 tracking-tight leading-snug min-w-0 break-words">
           {displayPickTitle(
             coupon.title,
             coupon.picks.map((p) => ({
@@ -563,38 +566,34 @@ export default function CouponDetailPage({
             {/* Header — tags + stats */}
             <div className="mb-6">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                {sportMeta && (
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${sportMeta.color}`}>
-                    {sportMeta.icon} {t(sportMeta.labelKey)}
-                  </span>
-                )}
-                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${resultStyle}`}>
+                {sportMeta && <span className={QUIET_CHIP}>{t(sportMeta.labelKey)}</span>}
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-semibold border capitalize ${resultStyle}`}>
                   {coupon.result === 'pending'
                     ? t('pick_detail.result_pending')
                     : coupon.result === 'won'
                       ? t('pick_detail.result_won')
                       : coupon.result === 'lost'
                         ? t('pick_detail.result_lost')
-                        : coupon.result}
+                        : coupon.result === 'void'
+                          ? t('pick_detail.settlement_void_title')
+                          : coupon.result}
                 </span>
                 {coupon.createdAt && (
-                  <span className="text-sm text-[var(--text-muted)]">{formatDate(coupon.createdAt, lang)}</span>
+                  <span className="text-[13px] text-[var(--text-muted)]">{formatDate(coupon.createdAt, lang)}</span>
                 )}
               </div>
 
               {/* Stats row */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-muted)]">
-                <span className="flex items-center gap-1">
-                  {t('pick_card.picks_count', { n: String(pickCount) })}
-                </span>
-                <span className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[14px] text-[var(--text-muted)]">
+                <span>{t('pick_card.picks_count', { n: String(pickCount) })}</span>
+                <span>
                   {t('pick_detail.total_odds_prefix')}{' '}
-                  <span className="font-semibold text-[var(--text)] ml-1">{Number(coupon.totalOdds).toFixed(2)}</span>
+                  <span className="font-semibold text-[var(--text)] tabular-nums">{Number(coupon.totalOdds).toFixed(2)}</span>
                 </span>
                 {settledPicks > 0 && (
-                  <span className="flex items-center gap-1">
-                    <span className="text-[var(--success)] font-semibold">{wonPicks}W</span>
-                    <span className="text-[var(--destructive)] font-semibold">{lostPicks}L</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-[var(--success)] font-semibold tabular-nums">{wonPicks}W</span>
+                    <span className="text-[var(--destructive)] font-semibold tabular-nums">{lostPicks}L</span>
                     <span className="text-[var(--text-muted)]">
                       / {pickCount} {t('pick_card.picks')}
                     </span>
@@ -602,16 +601,13 @@ export default function CouponDetailPage({
                 )}
                 {coupon.purchaseCount != null && coupon.purchaseCount > 0 && (
                   <span
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border bg-[var(--primary-light)] text-[var(--primary)] border-[var(--primary)]/25"
+                    className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[var(--primary-light)] text-[var(--primary)] border border-[var(--primary)]/20"
                     title={
                       Number(coupon.price) <= 0
                         ? t('pick_card.badge_free_unlocks_hint')
                         : t('pick_card.badge_purchases_hint')
                     }
                   >
-                    <span aria-hidden className="opacity-90">
-                      {Number(coupon.price) <= 0 ? '✓' : '🛒'}
-                    </span>
                     {Number(coupon.price) <= 0
                       ? coupon.purchaseCount === 1
                         ? t('pick_card.badge_free_unlocks_one')
@@ -731,7 +727,7 @@ export default function CouponDetailPage({
                   {coupon.picks.map((pick, idx) => (
                     <div
                       key={pick.id ?? idx}
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4 flex items-start gap-3 min-w-0"
+                      className="rounded-2xl border border-[var(--separator)] bg-[var(--card)]/80 p-4 flex items-start gap-3 min-w-0"
                     >
                       <IconLock className="w-5 h-5 opacity-60 shrink-0 text-[var(--text-muted)] mt-0.5" aria-hidden />
                       <div className="min-w-0 flex-1">
@@ -755,14 +751,14 @@ export default function CouponDetailPage({
                     </div>
                   ))}
                 </div>
-                <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
+                <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-5 mb-6">
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-2">{t('pick_detail.odds_breakdown_title')}</h3>
                   <p className="text-sm text-[var(--text-muted)] mb-3">
                     {subscriptionLocked
                       ? t('pick_detail.per_leg_unlock_vip_note')
                       : t('pick_detail.per_leg_unlock_note')}
                   </p>
-                  <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-2 min-w-0">
+                  <div className="pt-2 border-t border-[var(--separator)] flex items-center justify-between gap-2 min-w-0">
                     <span className="text-sm font-semibold text-[var(--text)] shrink-0">{t('pick_detail.total_odds_balance')}</span>
                     <span className="text-base font-semibold text-[var(--primary)] tabular-nums shrink-0">
                       {Number(coupon.totalOdds).toFixed(2)}
@@ -830,10 +826,8 @@ export default function CouponDetailPage({
                                 />
                               )}
                               {pickSport && coupon.sport === 'Multi-Sport' && (
-                                <span
-                                  className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${pickSport.color}`}
-                                >
-                                  {pickSport.icon} {t(pickSport.labelKey)}
+                                <span className={QUIET_CHIP}>
+                                  {t(pickSport.labelKey)}
                                 </span>
                               )}
                             </div>
@@ -845,7 +839,7 @@ export default function CouponDetailPage({
                             </span>
 
                             {hasScore && (
-                              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--text)]">
+                              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[var(--bg)] border border-[var(--separator)] text-[var(--text)]">
                                 {pick.homeScore} – {pick.awayScore}
                               </span>
                             )}
@@ -862,7 +856,7 @@ export default function CouponDetailPage({
                   })}
                 </div>
 
-                <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 mb-6">
+                <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-5 mb-6">
                   <h3 className="text-sm font-semibold text-[var(--text)] mb-3">{t('pick_detail.odds_breakdown_title')}</h3>
                   <div className="space-y-2">
                     {coupon.picks.map((p, idx) => (
@@ -877,7 +871,7 @@ export default function CouponDetailPage({
                         </span>
                       </div>
                     ))}
-                    <div className="pt-2 border-t border-[var(--border)] flex items-center justify-between gap-2 min-w-0">
+                    <div className="pt-2 border-t border-[var(--separator)] flex items-center justify-between gap-2 min-w-0">
                       <span className="text-sm font-semibold text-[var(--text)] shrink-0">{t('pick_detail.total_odds_balance')}</span>
                       <span className="text-base font-semibold text-[var(--primary)] tabular-nums shrink-0">
                         {Number(coupon.totalOdds).toFixed(2)}
@@ -890,15 +884,13 @@ export default function CouponDetailPage({
           </div>
 
           {/* ── Sidebar ── */}
-          <aside className="w-full min-w-0 max-w-full lg:w-72 shrink-0">
+          <aside className="w-full min-w-0 max-w-full lg:w-80 shrink-0">
             <div className="lg:sticky lg:top-24 space-y-4">
-              <AdSlot zoneSlug="coupon-detail-sidebar" />
-
-              {/* Purchase / receipt card — guests on settled picks see sign-up CTA instead */}
-              <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] overflow-hidden shadow-sm">
+              {/* Purchase / receipt card first — decision moment stays above ads */}
+              <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] overflow-hidden">
                 <div className="p-5">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-4 min-w-0">
-                    <span className="text-lg font-semibold text-[var(--primary)] tabular-nums shrink-0">
+                    <span className="text-[22px] font-semibold tracking-tight text-[var(--text)] tabular-nums shrink-0">
                       {coupon.requiresSubscription
                         ? t('pick_card.vip_included')
                         : isOpenFree
@@ -1042,12 +1034,12 @@ export default function CouponDetailPage({
                 </div>
 
                 {/* Purchase protection */}
-                <div className="border-t border-[var(--border)] p-4 bg-[var(--primary-light)]">
+                <div className="border-t border-[var(--separator)] p-4 bg-[var(--primary-light)]/80">
                   <div className="flex items-start gap-2">
                     <IconShield className="w-5 h-5 shrink-0 text-[var(--primary)]" aria-hidden />
                     <div>
-                      <p className="text-xs font-bold text-[var(--primary)]">{t('pick_detail.escrow_badge_title')}</p>
-                      <p className="text-xs text-[var(--text-muted)] leading-relaxed mt-0.5">
+                      <p className="text-[12px] font-semibold text-[var(--primary)]">{t('pick_detail.escrow_badge_title')}</p>
+                      <p className="text-[12px] text-[var(--text-muted)] leading-relaxed mt-0.5">
                         {isOpenFree ? t('pick_detail.escrow_free_note') : coupon.requiresSubscription ? t('pick_detail.selections_locked_vip_body') : t('pick_detail.escrow_paid_note')}
                       </p>
                     </div>
@@ -1055,8 +1047,10 @@ export default function CouponDetailPage({
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
-                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+              <AdSlot zoneSlug="coupon-detail-sidebar" />
+
+              <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-4">
+                <p className="text-[11px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] mb-3">
                   {t('pick_social.community_title')}
                 </p>
                 <PickSocialBar
@@ -1084,10 +1078,10 @@ export default function CouponDetailPage({
 
               {/* Tipster card */}
               {coupon.tipster && (
-                <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
+                <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-4">
                   <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Tipster</p>
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--primary-light)] border border-[var(--border)] flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--primary-light)] border border-[var(--separator)] flex-shrink-0">
                       {coupon.tipster.avatarUrl && !avatarError ? (
                         <Image
                           src={getAvatarUrl(coupon.tipster.avatarUrl, 40)!}
@@ -1144,7 +1138,7 @@ export default function CouponDetailPage({
               )}
 
               {/* Share — booking code only if tipster added one and API revealed it */}
-              <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
+              <div className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-4">
                 <PickShareButtons
                   couponId={coupon.id}
                   title={displayPickTitle(
@@ -1166,7 +1160,7 @@ export default function CouponDetailPage({
               </div>
 
               {/* Disclaimer */}
-              <div className="rounded-xl bg-[var(--card)] border border-[var(--border)] p-3">
+              <div className="rounded-xl bg-[var(--card)] border border-[var(--separator)] p-3">
                 <p className="text-[10px] text-[var(--text-muted)] leading-relaxed">
                   {t('pick_detail.sidebar_disclaimer')}
                 </p>

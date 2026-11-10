@@ -492,7 +492,7 @@ function WalletContent() {
             )}
 
             {canWithdraw && walletTab === 'withdraw' && (
-              <div id="withdraw" className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm scroll-mt-[calc(var(--br-chrome-below-header)+1rem)] min-w-0">
+              <div id="withdraw" className="ios-grouped-section p-5 scroll-mt-[calc(var(--br-chrome-below-header)+1rem)] min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{withdrawSectionTitle}</h2>
 
                 {/* Pending withdrawal warning */}
@@ -514,7 +514,7 @@ function WalletContent() {
                 )}
 
                 {showPayoutForm ? (
-                  <div className="space-y-3 p-4 rounded-lg border border-[var(--border)] bg-[var(--bg)]">
+                  <div className="space-y-3 p-4 rounded-lg border border-[var(--separator)] bg-[var(--bg)]">
                         <Field label={t('wallet.payout_method')} htmlFor="wallet-payout-type">
                           <select
                             id="wallet-payout-type"
@@ -644,7 +644,7 @@ function WalletContent() {
                     <button
                       type="button"
                       onClick={() => setShowPayoutForm(true)}
-                      className="w-full sm:w-auto px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-muted)]"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg border border-[var(--separator)] text-[var(--text)] hover:bg-[var(--bg-muted)]"
                     >
                       {t('wallet.add_payout_method')}
                     </button>
@@ -654,7 +654,7 @@ function WalletContent() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] min-w-0">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 rounded-xl bg-[var(--bg)] border border-[var(--separator)] min-w-0">
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-[var(--text-muted)] mb-0.5">{t('wallet.payout_method')}</p>
                         <p className="text-sm text-[var(--text)] font-medium break-words">
@@ -712,7 +712,7 @@ function WalletContent() {
 
             {/* Withdrawal history — anyone who can withdraw */}
             {canWithdraw && walletTab === 'withdraw' && withdrawals.length > 0 && (
-              <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm min-w-0">
+              <div className="ios-grouped-section p-5 min-w-0">
                 <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('wallet.withdrawal_history')}</h2>
                 <ul className="space-y-2">
                   {withdrawals.slice(0, 8).map((w) => {
@@ -728,7 +728,7 @@ function WalletContent() {
                           ? t('wallet.failure_reason')
                           : null;
                     return (
-                      <li key={w.id} className="flex flex-col gap-2 py-3 border-b border-[var(--border)] last:border-0">
+                      <li key={w.id} className="flex flex-col gap-2 py-3 border-b border-[var(--separator)] last:border-0">
                         <div className="flex items-start justify-between gap-3 min-w-0">
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-[var(--text)] tabular-nums">

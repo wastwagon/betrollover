@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
+import { GuideCallout, GuideFaqList, GuideStack, GuideStep } from '@/components/education/GuideChrome';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
 
@@ -49,41 +50,26 @@ export default async function PurchaseProtectionGuidePage() {
         />
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="escrow" />
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 sm:p-7 text-[var(--text)]">
-          <h2 className="text-lg font-semibold">{t('guides.escrow_s1_title')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.escrow_s1_body')}
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.escrow_s2_title')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.escrow_s2_body')}
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.escrow_s3_title')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.escrow_s3_body_before')}{' '}
-            <Link href="/wallet" className="text-[var(--primary)] hover:underline">
-              {t('nav.wallet')}
-            </Link>{' '}
-            {t('guides.escrow_s3_body_and')}{' '}
-            <Link href="/my-purchases" className="text-[var(--primary)] hover:underline">
-              {t('nav.purchases')}
-            </Link>
-            .
-          </p>
-
-          <h2 className="text-lg font-semibold mt-6">{t('guides.escrow_s4_title')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('guides.escrow_s4_body')}
-          </p>
-
-          <div className="mt-7 rounded-xl border border-[var(--primary)]/25 bg-[var(--primary-light)] p-4">
-            <p className="text-xs text-[var(--text)] leading-relaxed">
-              {t('guides.escrow_callout')}
+        <GuideStack>
+          <GuideStep index="1" title={t('guides.escrow_s1_title')}>
+            <p>{t('guides.escrow_s1_body')}</p>
+          </GuideStep>
+          <GuideStep index="2" title={t('guides.escrow_s2_title')}>
+            <p>{t('guides.escrow_s2_body')}</p>
+          </GuideStep>
+          <GuideStep index="3" title={t('guides.escrow_s3_title')}>
+            <p>
+              {t('guides.escrow_s3_body_before')}{' '}
+              <Link href="/wallet">{t('nav.wallet')}</Link> {t('guides.escrow_s3_body_and')}{' '}
+              <Link href="/my-purchases">{t('nav.purchases')}</Link>.
             </p>
-          </div>
-        </article>
+          </GuideStep>
+          <GuideStep index="4" title={t('guides.escrow_s4_title')}>
+            <p>{t('guides.escrow_s4_body')}</p>
+          </GuideStep>
+          <GuideCallout>{t('guides.escrow_callout')}</GuideCallout>
+          <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+        </GuideStack>
       </main>
       <AppFooter />
     </div>

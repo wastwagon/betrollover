@@ -50,7 +50,7 @@ export default async function GuidesIndexPage() {
       summary: t('guides.stats_card_summary'),
     },
     {
-      href: '/guides/accumulator-settlement',
+      href: '/guides/how-accumulators-settle',
       title: t('guides.acca_card_title'),
       summary: t('guides.acca_card_summary'),
     },
@@ -78,12 +78,15 @@ export default async function GuidesIndexPage() {
         <DiscoverFamilyNav current="guides" />
         <EducationRelatedLinks current="guides" />
 
-        <div className="space-y-4">
+        <div className="ios-grouped-section overflow-hidden divide-y divide-[var(--separator)]">
           {GUIDES.map((g) => (
-            <article key={g.href} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
-              <h2 className="text-lg font-semibold text-[var(--text)]">{g.title}</h2>
-              <p className="text-sm text-[var(--text-muted)] mt-2">{g.summary}</p>
-              <Link href={g.href} className="inline-flex mt-3 text-sm font-semibold text-[var(--primary)] hover:underline">
+            <article key={g.href} className="bg-[var(--card)] px-4 py-4 sm:px-5 sm:py-4.5">
+              <h2 className="text-[17px] font-semibold tracking-tight text-[var(--text)]">{g.title}</h2>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-[var(--text-muted)]">{g.summary}</p>
+              <Link
+                href={g.href}
+                className="mt-3 inline-flex min-h-[44px] items-center text-[15px] font-semibold text-[var(--primary)]"
+              >
                 {t('guides.read')}
               </Link>
             </article>

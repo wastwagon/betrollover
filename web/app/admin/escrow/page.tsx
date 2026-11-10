@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader, AdminStatTile } from '@/components/admin/AdminPageHeader';
 import { getApiUrl } from '@/lib/site-config';
 
 type EscrowBreakdownNote = 'refunded' | 'if_won' | 'if_period_end' | 'released';
@@ -138,49 +139,39 @@ export default function AdminEscrowPage() {
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Pending settlement</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            <strong>Marketplace picks:</strong> purchases stay pending settlement until results. On a win the tipster is
-            paid after results; on loss/void the buyer is refunded. <strong>VIP subscriptions:</strong> period-end
-            payout — the tipster is paid after the period ends minus the platform commission (same 30% default as a
-            winning paid pick). Both use the platform rate below for tipster net vs platform fee on payout.
-          </p>
-          <p className="mt-2 text-sm font-medium text-amber-800 dark:text-amber-200">
-            Current platform commission rate: {commissionRatePercent.toFixed(1)}% (tipster receives{' '}
-            {(100 - commissionRatePercent).toFixed(1)}% of gross on payout)
-          </p>
-        </div>
+        <AdminPageHeader
+          title="Pending settlement"
+          tagline="Marketplace picks settle after results; VIP pays out after the period ends minus platform commission."
+        />
+        <p className="mb-6 -mt-2 text-[13px] font-medium text-[var(--accent)] px-0.5">
+          Platform commission: {commissionRatePercent.toFixed(1)}% · tipster net {(100 - commissionRatePercent).toFixed(1)}%
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
-          <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
-            <p className="text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">Total pending (picks + VIP)</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">GHS {totalHeld.toFixed(2)}</p>
-            <p className="mt-2 text-xs text-amber-800/80 dark:text-amber-200/90">
-              Pick pending: GHS {totalHeldPick.toFixed(2)} · VIP pending: GHS {totalHeldSub.toFixed(2)}
-            </p>
-          </div>
-          <div className="rounded-[var(--radius)] border border-[var(--separator)] bg-[var(--card)] shadow-sm p-4 sm:p-6">
-            <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Active pending</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{activeHoldings}</p>
-            <p className="mt-2 text-xs text-blue-800/80 dark:text-blue-200/90">
-              {pickHeld.length} pick · {subHeld.length} VIP
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3 mb-8">
+          <AdminStatTile
+            label="Total pending (picks + VIP)"
+            value={`GHS ${totalHeld.toFixed(2)}`}
+            hint={`Pick ${totalHeldPick.toFixed(2)} · VIP ${totalHeldSub.toFixed(2)}`}
+          />
+          <AdminStatTile
+            label="Active pending"
+            value={activeHoldings}
+            hint={`${pickHeld.length} pick · ${subHeld.length} VIP`}
+          />
         </div>
 
         {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
               <div className="w-12 h-12 rounded-full border-4 border-red-200 border-t-red-600 animate-spin" />
-              <p className="text-gray-600 dark:text-gray-400 font-medium">Loading pending settlement...</p>
+              <p className="text-[var(--text-muted)] font-medium">Loading pending settlement...</p>
             </div>
           </div>
         )}
         {!loading && (
           <div className="space-y-10">
             {!hasAnyRows ? (
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+              <div className="ios-grouped-section p-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                   <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -191,18 +182,18 @@ export default function AdminEscrowPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No pending settlement records</h3>
-                <p className="text-gray-600 dark:text-gray-400">No marketplace pick or VIP subscription settlement rows yet.</p>
+                <h3 className="text-lg font-semibold text-[var(--text)] mb-2">No pending settlement records</h3>
+                <p className="text-[var(--text-muted)]">No marketplace pick or VIP subscription settlement rows yet.</p>
               </div>
             ) : (
               <>
                 {funds.length > 0 && (
                   <section>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Marketplace pick settlement</h2>
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <h2 className="text-lg font-semibold text-[var(--text)] mb-3">Marketplace pick settlement</h2>
+                    <div className="ios-grouped-section overflow-hidden">
                       <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                          <thead className="bg-gray-50 dark:bg-gray-800">
+                        <table className="min-w-full divide-y divide-[var(--separator)]">
+                          <thead className="bg-[var(--fill-secondary)]/50">
                             <tr>
                               <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[10rem]">
                                 Buyer
@@ -230,7 +221,7 @@ export default function AdminEscrowPage() {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-[var(--separator)]">
                             {funds.map((f) => {
                               const buyer = formatPerson(f.buyerDisplayName, f.buyerUsername, f.userId, f.buyerEmail);
                               const tipsterId = f.tipsterUserId ?? 0;
@@ -240,24 +231,24 @@ export default function AdminEscrowPage() {
                               const netHint = noteHint(f.escrowBreakdownNote, 'net');
                               const feeHint = noteHint(f.escrowBreakdownNote, 'fee');
                               return (
-                                <tr key={`pick-${f.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                                <tr key={`pick-${f.id}`} className="hover:bg-[var(--fill-secondary)]/40/50 transition-colors">
+                                  <td className="px-4 py-4 text-sm text-[var(--text)]">
                                     <div className="font-medium">{buyer.name}</div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">{buyer.sub}</div>
+                                    <div className="text-xs text-[var(--text-tertiary)]">{buyer.sub}</div>
                                   </td>
-                                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                                  <td className="px-4 py-4 text-sm text-[var(--text)]">
                                     <div className="font-medium">{tipster.name}</div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">{tipster.sub}</div>
+                                    <div className="text-xs text-[var(--text-tertiary)]">{tipster.sub}</div>
                                   </td>
-                                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-white max-w-[14rem]">
+                                  <td className="px-4 py-4 text-sm text-[var(--text)] max-w-[14rem]">
                                     <div className="font-mono text-xs text-gray-600 dark:text-gray-300">#{f.pickId}</div>
                                     {f.pickTitle ? (
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={f.pickTitle}>
+                                      <div className="text-xs text-[var(--text-tertiary)] truncate" title={f.pickTitle}>
                                         {f.pickTitle}
                                       </div>
                                     ) : null}
                                   </td>
-                                  <td className="px-4 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">
+                                  <td className="px-4 py-4 whitespace-nowrap font-semibold text-[var(--text)]">
                                     GHS {Number(f.amount).toFixed(2)}
                                   </td>
                                   <td className="px-4 py-4 whitespace-nowrap">
@@ -289,7 +280,7 @@ export default function AdminEscrowPage() {
                                       {settlementStatusLabel(f.status)}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--text-muted)]">
                                     {new Date(f.createdAt).toLocaleString()}
                                   </td>
                                 </tr>
@@ -304,11 +295,11 @@ export default function AdminEscrowPage() {
 
                 {subscriptionFunds.length > 0 && (
                   <section>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">VIP subscription period-end payout</h2>
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <h2 className="text-lg font-semibold text-[var(--text)] mb-3">VIP subscription period-end payout</h2>
+                    <div className="ios-grouped-section overflow-hidden">
                       <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                          <thead className="bg-gray-50 dark:bg-gray-800">
+                        <table className="min-w-full divide-y divide-[var(--separator)]">
+                          <thead className="bg-[var(--fill-secondary)]/50">
                             <tr>
                               <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider min-w-[10rem]">
                                 Subscriber
@@ -336,7 +327,7 @@ export default function AdminEscrowPage() {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-[var(--separator)]">
                             {subscriptionFunds.map((f) => {
                               const buyer = formatPerson(f.buyerDisplayName, f.buyerUsername, f.userId, f.buyerEmail);
                               const tipsterId = f.tipsterUserId ?? 0;
@@ -346,26 +337,26 @@ export default function AdminEscrowPage() {
                               const netHint = noteHint(f.escrowBreakdownNote, 'net');
                               const feeHint = noteHint(f.escrowBreakdownNote, 'fee');
                               return (
-                                <tr key={`sub-${f.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                                <tr key={`sub-${f.id}`} className="hover:bg-[var(--fill-secondary)]/40/50 transition-colors">
+                                  <td className="px-4 py-4 text-sm text-[var(--text)]">
                                     <div className="font-medium">{buyer.name}</div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">{buyer.sub}</div>
+                                    <div className="text-xs text-[var(--text-tertiary)]">{buyer.sub}</div>
                                   </td>
-                                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                                  <td className="px-4 py-4 text-sm text-[var(--text)]">
                                     <div className="font-medium">{tipster.name}</div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">{tipster.sub}</div>
+                                    <div className="text-xs text-[var(--text-tertiary)]">{tipster.sub}</div>
                                   </td>
-                                  <td className="px-4 py-4 text-sm text-gray-900 dark:text-white max-w-[14rem]">
+                                  <td className="px-4 py-4 text-sm text-[var(--text)] max-w-[14rem]">
                                     {f.subscriptionId != null ? (
                                       <div className="font-mono text-xs text-gray-600 dark:text-gray-300">sub #{f.subscriptionId}</div>
                                     ) : null}
                                     {f.packageName ? (
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={f.packageName}>
+                                      <div className="text-xs text-[var(--text-tertiary)] truncate" title={f.packageName}>
                                         {f.packageName}
                                       </div>
                                     ) : null}
                                   </td>
-                                  <td className="px-4 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-white">
+                                  <td className="px-4 py-4 whitespace-nowrap font-semibold text-[var(--text)]">
                                     GHS {Number(f.amount).toFixed(2)}
                                   </td>
                                   <td className="px-4 py-4 whitespace-nowrap">
@@ -397,7 +388,7 @@ export default function AdminEscrowPage() {
                                       {settlementStatusLabel(f.status)}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                  <td className="px-4 py-4 whitespace-nowrap text-sm text-[var(--text-muted)]">
                                     {new Date(f.createdAt).toLocaleString()}
                                   </td>
                                 </tr>

@@ -269,7 +269,7 @@ function MarketMultiSelect({
         className={`flex w-full items-center justify-between gap-3 rounded-xl border bg-[var(--card)] px-3.5 py-3 text-left transition ${
           open
             ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]/20'
-            : 'border-[var(--border)] hover:border-[var(--primary)]/40'
+            : 'border-[var(--separator)] hover:border-[var(--primary)]/40'
         }`}
       >
         <span className="min-w-0">
@@ -285,7 +285,7 @@ function MarketMultiSelect({
           </span>
         </span>
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--text-muted)] transition ${
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--separator)] bg-[var(--card)] text-[var(--text-muted)] transition ${
             open ? 'rotate-180 text-[var(--primary)]' : ''
           }`}
           aria-hidden
@@ -304,7 +304,7 @@ function MarketMultiSelect({
         <div
           role="listbox"
           aria-multiselectable="true"
-          className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]"
+          className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-[var(--separator)] bg-[var(--card)]"
         >
           <div className="flex items-center justify-between gap-2 border-b border-[var(--separator)] bg-[var(--fill-secondary)] px-3 py-2">
             <p className="text-[11px] font-medium text-[var(--text-muted)]">
@@ -345,7 +345,7 @@ function MarketMultiSelect({
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
                         on
                           ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
-                          : 'border-[var(--border)] bg-[var(--card)]'
+                          : 'border-[var(--separator)] bg-[var(--card)]'
                       }`}
                       aria-hidden
                     >
@@ -699,15 +699,15 @@ export default function AccaGeneratorPage() {
           </p>
 
           <aside
-            className="mb-5 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-light)] px-4 py-3.5 text-sm text-[var(--text)]"
+            className="mb-5 rounded-2xl border border-[var(--primary)]/20 bg-[var(--primary-light)]/70 px-4 py-3.5 sm:px-5 text-[15px] text-[var(--text)]"
             role="note"
             aria-label={t('acca.disclaimer_aria')}
           >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--primary)]">
               {t('acca.landing_disclaimer_kicker')}
             </p>
-            <p className="mt-1.5 leading-relaxed">{t('acca.tool_disclaimer')}</p>
-            <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+            <p className="mt-1.5 leading-relaxed text-[13px] sm:text-[14px]">{t('acca.tool_disclaimer')}</p>
+            <p className="mt-2 text-[12px] leading-relaxed text-[var(--text-muted)]">
               {t('acca.gamble_afford')}{' '}
               <Link
                 href="/responsible-gambling"
@@ -721,7 +721,7 @@ export default function AccaGeneratorPage() {
           </aside>
 
           {!config?.enabled && (
-            <div className="mb-4 rounded-xl border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-4 py-3 text-sm text-[var(--text)]">
+            <div className="mb-4 rounded-2xl border border-[var(--separator)] bg-[var(--fill-secondary)] px-4 py-3 text-sm text-[var(--text)]">
               {generatorAllowed
                 ? t('acca.disabled_admin')
                 : t('acca.disabled_users')}
@@ -729,28 +729,28 @@ export default function AccaGeneratorPage() {
           )}
 
           {error && (
-            <div className="mb-4 rounded-xl border border-[var(--destructive)]/25 bg-[var(--destructive)]/10 px-4 py-3 text-sm text-[var(--destructive)]">
+            <div className="mb-4 rounded-2xl border border-[var(--destructive)]/20 bg-[var(--destructive)]/10 px-4 py-3 text-sm text-[var(--destructive)]">
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 rounded-xl border border-[var(--primary)]/25 bg-[var(--primary-light)] px-4 py-3 text-sm text-[var(--primary)]">
+            <div className="mb-4 rounded-2xl border border-[var(--separator)] bg-[var(--card)] px-4 py-3 text-sm text-[var(--text)]">
               {success}{' '}
-              <Link href="/marketplace" className="underline font-medium">
+              <Link href="/marketplace" className="font-semibold text-[var(--primary)] underline">
                 {t('acca.view_marketplace')}
               </Link>
               {' · '}
-              <Link href="/my-picks" className="underline font-medium">
+              <Link href="/my-picks" className="font-semibold text-[var(--primary)] underline">
                 {t('nav.my_picks')}
               </Link>
             </div>
           )}
 
           <div className="mx-auto max-w-3xl">
-      <section className="space-y-6 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+      <section className="space-y-6 rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 sm:p-6">
         <div>
-          <p className="text-sm font-medium text-[var(--text)]">{t('acca.risk_level')}</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">
+          <p className="text-[15px] font-semibold text-[var(--text)]">{t('acca.risk_level')}</p>
+          <p className="mt-1 text-[12px] text-[var(--text-muted)]">
             {t('acca.risk_level_hint')}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -766,8 +766,8 @@ export default function AccaGeneratorPage() {
                   }}
                   className={`rounded-xl border px-3 py-3 text-left transition ${
                     on
-                      ? 'border-[var(--primary)] bg-[var(--primary-light)] ring-2 ring-[var(--primary)]/20'
-                      : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--primary)]/40'
+                      ? 'border-[var(--primary)] bg-[var(--primary-light)]'
+                      : 'border-[var(--separator)] bg-[var(--fill-secondary)]/40 hover:border-[var(--primary)]/35'
                   }`}
                 >
                   <span className="block text-sm font-semibold text-[var(--text)]">{p.label}</span>
@@ -849,12 +849,12 @@ export default function AccaGeneratorPage() {
             {t('acca.legs_more_risk')}
           </p>
           {combinedBand && (
-            <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--fill-secondary)] px-4 py-3.5">
-              <p className="text-sm font-semibold text-[var(--text)]">
+            <div className="mt-3 rounded-xl border border-[var(--separator)] bg-[var(--fill-secondary)]/50 px-4 py-3.5">
+              <p className="text-[15px] font-semibold text-[var(--text)]">
                 {t('acca.slip_picture', { label: activeRisk?.label ?? '', legs: String(legs) })}
               </p>
               <p className="mt-1.5 text-sm font-semibold text-[var(--primary)]">{overallExposure.label}</p>
-              <p className="mt-1 text-sm leading-snug text-[var(--text)]">{overallExposure.detail}</p>
+              <p className="mt-1 text-sm leading-snug text-[var(--text-muted)]">{overallExposure.detail}</p>
               <p className="mt-3 text-sm tabular-nums text-[var(--text)]">
                 {t('acca.combined_odds_near')}{' '}
                 <span className="font-semibold">
@@ -899,11 +899,11 @@ export default function AccaGeneratorPage() {
       </section>
 
       {result && (
-        <section className="mt-6 space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+        <section className="mt-6 space-y-4 rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-[var(--text)]">{t('acca.suggested_slip')}</h2>
-              <p className="text-xs text-[var(--text-muted)] mt-1">
+              <h2 className="text-[15px] font-semibold text-[var(--text)]">{t('acca.suggested_slip')}</h2>
+              <p className="text-[12px] text-[var(--text-muted)] mt-1">
                 {t('acca.combined_odds_line', { odds: formatOdds(Number(result.combinedOdds)) })}
                 {' · '}
                 {t('acca.legs_count', { n: String(result.legs.length) })}
@@ -919,19 +919,19 @@ export default function AccaGeneratorPage() {
               type="button"
               onClick={() => void onGenerate()}
               disabled={generating || !canGenerate}
-              className="text-xs font-medium text-[var(--primary)] hover:underline disabled:text-[var(--text-muted)] disabled:no-underline"
+              className="text-xs font-semibold text-[var(--primary)] hover:underline disabled:text-[var(--text-muted)] disabled:no-underline"
             >
               {t('acca.regenerate')}
             </button>
           </div>
 
-          <ul className="divide-y divide-[var(--separator)] border border-[var(--separator)] rounded-xl overflow-hidden">
+          <ul className="ios-grouped-section overflow-hidden divide-y divide-[var(--separator)]">
             {result.legs.map((leg) => (
-              <li key={`${leg.fixtureId}-${leg.outcomeKey}`} className="px-4 py-3 bg-[var(--fill-secondary)]">
+              <li key={`${leg.fixtureId}-${leg.outcomeKey}`} className="px-4 py-3.5 bg-[var(--card)]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[var(--text)] truncate">{leg.matchDescription}</p>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                    <p className="text-[15px] font-medium text-[var(--text)] truncate">{leg.matchDescription}</p>
+                    <p className="text-[12px] text-[var(--text-muted)] mt-0.5">
                       {leg.leagueName || t('create_pick.sport_football')} ·{' '}
                       {new Date(leg.matchDate).toLocaleString(undefined, {
                         weekday: 'short',
@@ -939,10 +939,10 @@ export default function AccaGeneratorPage() {
                         minute: '2-digit',
                       })}
                     </p>
-                    <p className="text-sm text-[var(--primary)] mt-1">{leg.prediction}</p>
+                    <p className="text-sm font-medium text-[var(--primary)] mt-1">{leg.prediction}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-semibold tabular-nums">{Number(leg.odds).toFixed(2)}</p>
+                    <p className="text-[15px] font-semibold tabular-nums">{Number(leg.odds).toFixed(2)}</p>
                     <p className="text-[11px] text-[var(--text-muted)]">
                       {t('acca.implied', { pct: String(Math.round(leg.probability * 100)) })}
                     </p>

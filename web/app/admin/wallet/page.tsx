@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/AdminSidebar';
+import { AdminPageHeader, AdminStatTile } from '@/components/admin/AdminPageHeader';
 import { getApiUrl } from '@/lib/site-config';
 import { Button, buttonClassName } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -111,28 +112,25 @@ export default function AdminWalletPage() {
     <div className="flex min-h-screen bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
       <AdminSidebar />
       <main className="admin-main-sibling section-ux-admin-main min-w-0">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Wallet Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">View wallets and transaction history.</p>
-        </div>
+        <AdminPageHeader title="Wallets" tagline="View wallets and transaction history." />
 
-        <div className="flex flex-wrap gap-3 mb-8">
+        <div className="flex flex-wrap gap-2 mb-6">
           <button type="button"
             onClick={() => setTab('wallets')}
-            className={`flex-1 min-w-[140px] sm:flex-none px-6 py-3 rounded-xl font-semibold transition-all ${
-              tab === 'wallets' 
-                ? 'bg-[var(--primary)] text-white shadow-sm' 
-                : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            className={`flex-1 min-w-[140px] sm:flex-none px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+              tab === 'wallets'
+                ? 'bg-[var(--primary)] text-white'
+                : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
             }`}
           >
             Wallets
           </button>
           <button type="button"
             onClick={() => setTab('transactions')}
-            className={`flex-1 min-w-[140px] sm:flex-none px-6 py-3 rounded-xl font-semibold transition-all ${
-              tab === 'transactions' 
-                ? 'bg-[var(--primary)] text-white shadow-sm' 
-                : 'bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            className={`flex-1 min-w-[140px] sm:flex-none px-5 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+              tab === 'transactions'
+                ? 'bg-[var(--primary)] text-white'
+                : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
             }`}
           >
             Transactions
@@ -141,9 +139,8 @@ export default function AdminWalletPage() {
 
         {tab === 'wallets' && (
           <>
-            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-4 sm:p-6 text-gray-900 dark:text-white mb-6">
-              <p className="text-sm opacity-90 mb-1">Total Platform Balance</p>
-              <p className="text-3xl font-bold">GHS {totalBalance.toFixed(2)}</p>
+            <div className="mb-6 max-w-md">
+              <AdminStatTile label="Total platform balance" value={`GHS ${totalBalance.toFixed(2)}`} />
             </div>
 
             {adjustingWallet !== null && (
@@ -190,7 +187,7 @@ export default function AdminWalletPage() {
             )}
             {loading && <p className="text-[var(--text-muted)]">Loading...</p>}
             {!loading && (
-              <div className="bg-[var(--card)] rounded-card shadow-card border border-[var(--border)] overflow-hidden">
+              <div className="ios-grouped-section overflow-hidden">
                 {wallets.length === 0 ? (
                   <div className="p-12 text-center">
                     <p className="text-gray-600 dark:text-gray-400 text-lg">No wallets found</p>

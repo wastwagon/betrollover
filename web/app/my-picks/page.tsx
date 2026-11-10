@@ -171,10 +171,10 @@ export default function MyPicksPage() {
                   key={sf.key}
                   type="button"
                   onClick={() => setSportFilter(sf.key)}
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     sportFilter === sf.key
-                      ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                      : 'bg-[var(--card)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]'
+                      ? 'bg-[var(--primary)] text-white'
+                      : 'bg-[var(--fill-secondary)] text-[var(--text-muted)] hover:text-[var(--text)]'
                   }`}
                 >
                   <span>{t(sf.labelKey)}</span>
@@ -192,7 +192,7 @@ export default function MyPicksPage() {
           {loading && <LoadingSkeleton count={3} />}
 
           {!loading && picks.length === 0 && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+            <div className="ios-grouped-section">
               <EmptyState
                 title={t('my_picks.no_picks')}
                 description={t('my_picks.no_picks_desc')}
@@ -203,7 +203,7 @@ export default function MyPicksPage() {
           )}
 
           {!loading && picks.length > 0 && filtered.length === 0 && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+            <div className="ios-grouped-section">
               <EmptyState
                 title={t('my_picks.no_sport_picks', { sport: SPORT_DISPLAY_MAP[sportFilter] ?? sportFilter })}
                 description={t('my_picks.no_sport_desc')}

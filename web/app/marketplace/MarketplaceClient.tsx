@@ -701,11 +701,15 @@ export default function MarketplacePage({
             </div>
           ) : null}
 
-          {/* Sticky discovery chrome — one compact rail so picks stay the visual hero */}
-          <div className="sticky-below-chrome -mx-4 px-4 sm:-mx-6 sm:px-6 py-2 mb-4 bg-[var(--bg)]/95 backdrop-blur-md border-b border-[var(--separator)]">
+          <p className="mb-3 px-0.5 text-[12px] text-[var(--text-tertiary)] leading-snug">
+            {t('marketplace.escrow_note')}
+          </p>
+
+          {/* Sticky discovery chrome — filters only; trust copy stays above so picks stay the hero */}
+          <div className="sticky-below-chrome -mx-4 px-4 sm:-mx-6 sm:px-6 py-2.5 mb-5 bg-[var(--bg)]/92 backdrop-blur-xl border-b border-[var(--separator)]">
             {!footballOnly ? (
             <div
-              className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 mb-2 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]"
+              className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1.5 mb-2.5 scrollbar-hide -mx-1 px-1 touch-pan-x [-webkit-overflow-scrolling:touch]"
               role="group"
               aria-label={t('marketplace.filter_all_sports')}
             >
@@ -738,10 +742,6 @@ export default function MarketplacePage({
                   ))}
             </div>
             ) : null}
-
-            <p className="mb-2 px-0.5 text-[11px] sm:text-xs text-[var(--text-tertiary)] leading-snug">
-              {t('marketplace.escrow_note')}
-            </p>
 
             {!loading && (
               <>
@@ -826,11 +826,11 @@ export default function MarketplacePage({
             <LoadingSkeleton
               count={8}
               variant="cards"
-              cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0"
+              cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pb-8 min-w-0"
             />
           )}
           {!loading && picks.length === 0 && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)]">
+            <div className="ios-grouped-section">
               <EmptyState
                 title={debouncedTipster ? t('marketplace.no_tipster_matches') : t('marketplace.no_picks')}
                 description={
@@ -857,7 +857,7 @@ export default function MarketplacePage({
             </p>
           ) : null}
           {!loading && picks.length > 0 && filteredAndSortedPicks.length === 0 && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6">
+            <div className="ios-grouped-section p-2">
               <EmptyState
                 title={t('common.no_results')}
                 description={t('marketplace.no_picks_sub')}
@@ -874,7 +874,7 @@ export default function MarketplacePage({
           )}
           {!loading && filteredAndSortedPicks.length > 0 && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pb-8 min-w-0">
                 {filteredAndSortedPicks.map((a) => renderMarketplacePickCard(a))}
               </div>
             </>
@@ -903,44 +903,44 @@ export default function MarketplacePage({
           <div className="mb-4 flex flex-wrap justify-center gap-2 sm:gap-3 text-sm max-w-3xl mx-auto px-1">
             <Link
               href="/tipsters"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('nav.tipsters')}
             </Link>
             <Link
               href="/how-it-works#faq"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('home.how_it_works')}
             </Link>
             <Link
               href="/guides/purchase-protection"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('subscriptions.marketplace_link_escrow')}
             </Link>
             <Link
               href="/guides/evaluate-tipsters"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('subscriptions.marketplace_link_eval')}
             </Link>
             <Link
               href="/guides/free-and-paid-picks"
-              className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
             >
               {t('guides.free_short')}
             </Link>
             {isSubscriptionsEnabled() ? (
               <Link
                 href="/subscriptions/marketplace"
-                className="inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
+                className="inline-flex items-center justify-center rounded-full border border-[var(--separator)] bg-[var(--card)]/60 px-3 py-1.5 text-[var(--text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-colors"
               >
                 {t('nav.subscription_marketplace')}
               </Link>
             ) : null}
           </div>
-          <div className="relative mb-4 hidden sm:block rounded-2xl overflow-hidden border border-[var(--border)] h-28 sm:h-36 md:h-40 bg-[var(--card)]">
+          <div className="relative mb-4 hidden sm:block rounded-2xl overflow-hidden border border-[var(--separator)] h-28 sm:h-36 md:h-40 bg-[var(--card)]">
             <Image
               src="/images/marketing/marketplace-strip.png"
               alt=""

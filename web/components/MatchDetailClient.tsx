@@ -115,7 +115,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
         />
 
         <section
-          className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6 mb-6"
+          className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 sm:p-6 mb-6"
           aria-label={t('match.preview_label')}
         >
           <h2 className="text-lg font-semibold text-[var(--text)] mb-2">{t('match.preview_title')}</h2>
@@ -143,7 +143,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
           </p>
         </section>
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-8 mb-8 shadow-sm">
+        <div className="rounded-2xl border border-[var(--separator)] bg-[var(--card)] p-5 sm:p-8 mb-8 shadow-sm">
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="text-sm text-[var(--text-muted)]">{formatKickoff(match.matchDate)}</p>
@@ -172,7 +172,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
                     unoptimized={shouldUnoptimizeRemoteImage(match.homeTeamLogo)}
                   />
                 ) : (
-                  <span className="h-14 w-14 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-lg font-bold">
+                  <span className="h-14 w-14 rounded-full bg-[var(--bg)] border border-[var(--separator)] flex items-center justify-center text-lg font-bold">
                     {match.homeTeamName.slice(0, 1)}
                   </span>
                 )}
@@ -216,7 +216,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
                     unoptimized={shouldUnoptimizeRemoteImage(match.awayTeamLogo)}
                   />
                 ) : (
-                  <span className="h-14 w-14 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center text-lg font-bold">
+                  <span className="h-14 w-14 rounded-full bg-[var(--bg)] border border-[var(--separator)] flex items-center justify-center text-lg font-bold">
                     {match.awayTeamName.slice(0, 1)}
                   </span>
                 )}
@@ -231,7 +231,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
             </div>
 
             {match.spotlightPlayer && (
-              <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)]/60 px-4 py-3">
+              <div className="flex items-center gap-3 rounded-xl border border-[var(--separator)] bg-[var(--bg)]/60 px-4 py-3">
                 {match.spotlightPlayer.playerPhoto ? (
                   <Image
                     src={match.spotlightPlayer.playerPhoto}
@@ -243,7 +243,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
                     unoptimized={shouldUnoptimizeRemoteImage(match.spotlightPlayer.playerPhoto)}
                   />
                 ) : (
-                  <span className="h-10 w-10 rounded-full bg-[var(--card)] border border-[var(--border)] flex items-center justify-center text-sm font-bold shrink-0">
+                  <span className="h-10 w-10 rounded-full bg-[var(--card)] border border-[var(--separator)] flex items-center justify-center text-sm font-bold shrink-0">
                     {match.spotlightPlayer.playerName.slice(0, 1)}
                   </span>
                 )}
@@ -272,7 +272,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
               {match.leagueApiId != null && (
                 <Link
                   href="/league-tables"
-                  className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)]/40"
+                  className="inline-flex items-center justify-center min-h-[44px] px-4 rounded-xl border border-[var(--separator)] text-sm font-semibold text-[var(--text)] hover:border-[var(--primary)]/40"
                 >
                   {t('match.full_table')}
                 </Link>
@@ -295,7 +295,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
           </div>
 
           {related.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)]/50 px-6 py-10 text-center">
+            <div className="rounded-2xl border border-dashed border-[var(--separator)] bg-[var(--card)]/50 px-6 py-10 text-center">
               <p className="text-sm text-[var(--text-muted)] mb-4">{t('match.no_picks_yet')}</p>
               <Link
                 href="/marketplace?sport=football"

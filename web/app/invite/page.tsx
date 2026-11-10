@@ -97,31 +97,31 @@ export default function InvitePage() {
 
         {loading ? (
           <div className="space-y-4">
-            {[1,2].map((i) => <div key={i} className="h-24 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--border)]" />)}
+            {[1,2].map((i) => <div key={i} className="h-24 rounded-2xl skeleton" />)}
           </div>
         ) : !stats ? (
-          <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-8 text-center">
+          <div className="ios-grouped-section p-8 text-center">
             <p className="text-[var(--text-muted)]">{t('invite.load_failed')}</p>
           </div>
         ) : (
           <div className="space-y-5">
             {/* Summary stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               {[
                 { label: t('invite.invites_sent'), value: stats.totalReferrals },
                 { label: t('invite.reward_invite'), value: `GHS ${Number(stats.rewardPerReferral).toFixed(2)}` },
                 { label: t('invite.total_credited'), value: `GHS ${Number(stats.totalCredited).toFixed(2)}` },
               ].map((c) => (
-                <div key={c.label} className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4 text-center shadow-sm">
-                  <p className="text-base font-semibold text-[var(--text)]">{c.value}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5 uppercase tracking-wide">{c.label}</p>
+                <div key={c.label} className="rounded-2xl bg-[var(--card)] border border-[var(--separator)] p-4 text-center">
+                  <p className="text-[17px] font-semibold tracking-tight text-[var(--text)] tabular-nums">{c.value}</p>
+                  <p className="text-[11px] text-[var(--text-tertiary)] mt-1 uppercase tracking-[0.08em]">{c.label}</p>
                 </div>
               ))}
             </div>
 
             {/* Referral code */}
-            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
-              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{t('invite.your_referral_code')}</p>
+            <div className="ios-grouped-section p-5 min-w-0">
+              <p className="text-[12px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] mb-2">{t('invite.your_referral_code')}</p>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                 <span className="flex-1 min-w-0 font-mono text-xl sm:text-2xl font-bold text-[var(--primary)] tracking-widest break-all">
                   {stats.code}
@@ -131,8 +131,8 @@ export default function InvitePage() {
             </div>
 
             {/* Share link */}
-            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
-              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">{t('invite.share_link')}</p>
+            <div className="ios-grouped-section p-5 min-w-0">
+              <p className="text-[12px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] mb-2">{t('invite.share_link')}</p>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                 <div className="flex-1 min-w-0">
                   <Input
@@ -147,12 +147,12 @@ export default function InvitePage() {
             </div>
 
             {/* Share message */}
-            <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm min-w-0">
+            <div className="ios-grouped-section p-5 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-2 min-w-0">
-                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider min-w-0">{t('invite.share_message')}</p>
+                <p className="text-[12px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] min-w-0">{t('invite.share_message')}</p>
                 <CopyButton text={shareText} />
               </div>
-              <p className="text-sm text-[var(--text-muted)] bg-[var(--bg)] rounded-xl p-3 border border-[var(--border)] whitespace-pre-wrap break-words min-w-0">{shareText}</p>
+              <p className="text-sm text-[var(--text-muted)] bg-[var(--fill-secondary)]/50 rounded-xl p-3 whitespace-pre-wrap break-words min-w-0">{shareText}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <a
                   href={whatsappHref}
@@ -166,7 +166,7 @@ export default function InvitePage() {
                   href={telegramHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-700 text-white text-xs font-semibold hover:bg-sky-800 transition-colors disabled:opacity-60"
+                  className={buttonClassName({ size: 'sm', variant: 'secondary' })}
                 >
                   {t('invite.share_telegram')}
                 </a>
@@ -174,9 +174,9 @@ export default function InvitePage() {
             </div>
 
             {/* How it works */}
-            <div className="rounded-2xl bg-[var(--primary-light)] border border-[var(--primary)]/25 p-5">
-              <p className="text-sm font-semibold text-[var(--primary)] mb-3">{t('invite.how_it_works')}</p>
-              <div className="space-y-2">
+            <div className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--primary-light)]/70 p-5">
+              <p className="text-[13px] font-semibold text-[var(--text)] mb-3">{t('invite.how_it_works')}</p>
+              <div className="space-y-2.5">
                 {[
                   ['1', t('invite.step1')],
                   ['2', t('invite.step2')],
@@ -184,8 +184,10 @@ export default function InvitePage() {
                   ['4', t('invite.step4')],
                 ].map(([step, text]) => (
                   <div key={step} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--primary)] text-white text-xs font-bold flex items-center justify-center">{step}</span>
-                    <p className="text-sm text-[var(--text)]">{text}</p>
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-[var(--fill-secondary)] text-[var(--text-muted)] text-[12px] font-semibold flex items-center justify-center">
+                      {step}
+                    </span>
+                    <p className="text-[14px] leading-relaxed text-[var(--text-muted)]">{text}</p>
                   </div>
                 ))}
               </div>
@@ -193,11 +195,13 @@ export default function InvitePage() {
 
             {/* Conversions list */}
             {stats.conversions.length > 0 && (
-              <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
-                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">{t('invite.your_referrals')}</p>
-                <div className="space-y-2">
+              <div className="ios-grouped-section overflow-hidden">
+                <p className="text-[12px] font-semibold text-[var(--text-tertiary)] uppercase tracking-[0.08em] px-5 pt-4 pb-2">
+                  {t('invite.your_referrals')}
+                </p>
+                <div className="divide-y divide-[var(--separator)]">
                   {stats.conversions.map((c) => (
-                    <div key={c.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 py-2 border-b border-[var(--border)] last:border-0 min-w-0">
+                    <div key={c.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 px-5 py-3 min-w-0">
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-[var(--text)]">
                           {c.referredUser?.displayName ?? t('invite.user')}

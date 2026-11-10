@@ -46,7 +46,7 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
   if (loading) {
     return (
       <div
-        className={`${shell} rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg)] flex items-center justify-center ${placeholderMinH}`}
+        className={`${shell} rounded-xl border-2 border-dashed border-[var(--separator)] bg-[var(--bg)] flex items-center justify-center ${placeholderMinH}`}
       >
         <span className="text-sm text-[var(--text-muted)]">Loading...</span>
       </div>
@@ -54,15 +54,8 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
   }
 
   if (!ad) {
-    // Neutral placeholder — do not add another Telegram CTA (header + footer already cover it).
-    return (
-      <div
-        className={`${shell} rounded-xl border-2 border-dashed border-[var(--border)] bg-[var(--bg)] flex flex-col items-center justify-center gap-2 p-4 text-center ${placeholderMinH}`}
-        aria-hidden
-      >
-        <span className="text-xs text-[var(--text-muted)]">Sponsored space</span>
-      </div>
-    );
+    // Only render when a live campaign exists — never show empty ad placeholders.
+    return null;
   }
 
   const handleClick = () => {
@@ -80,7 +73,7 @@ export function AdSlot({ zoneSlug, className = '', fullWidth = false }: AdSlotPr
         target="_blank"
         rel="noopener noreferrer sponsored"
         onClick={handleClick}
-        className="block w-full max-w-full rounded-xl overflow-hidden border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors bg-[var(--card)]/40"
+        className="block w-full max-w-full rounded-xl overflow-hidden border border-[var(--separator)] hover:border-[var(--primary)]/30 transition-colors bg-[var(--card)]/40"
       >
         <div
           className="relative w-full mx-auto max-w-full"
