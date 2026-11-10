@@ -134,8 +134,8 @@ export class TelegramChannelService {
     const base = this.siteOrigin();
     const url = `${base}/tipsters/${PUBLIC_CHANNEL_SURE_USERNAME}?utm_source=telegram&utm_medium=social&utm_campaign=channel_acca_sure`;
     const core = [
-      `AccaSure · ${day}`,
-      `${n} new free Sure · 1X2 2-fold${n === 1 ? '' : 's'} on BetRollover.`,
+      `Low Odds · Two-match · ${day}`,
+      `${n} new free Low Odds two-match pick${n === 1 ? '' : 's'} on BetRollover.`,
       `View tips → ${url}`,
     ].join('\n');
     return this.sendMessage(appendEngagementFooter(core, `acca-sure-${day}-${n}`));

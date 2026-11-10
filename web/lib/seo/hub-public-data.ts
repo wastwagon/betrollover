@@ -54,9 +54,9 @@ export async function fetchMarketplaceHub(options?: {
   let hasMore = Boolean(obj.hasMore);
   let showingSettledFallback = false;
 
-  // Never leave /marketplace empty for crawlers: show latest settled picks with results.
+  // Empty live list: show up to 5 latest finished paid picks so the refund promise has proof.
   if (items.length === 0 && !options?.tipster?.trim() && (!options?.priceFilter || options.priceFilter === 'all')) {
-    const archive = await hubFetch('/accumulators/archive?limit=10', options?.revalidate ?? 60);
+    const archive = await hubFetch('/accumulators/archive?limit=40', options?.revalidate ?? 60);
     const archiveObj = archive && typeof archive === 'object' ? (archive as Record<string, unknown>) : {};
     let settled = Array.isArray(archiveObj.items)
       ? (archiveObj.items as Record<string, unknown>[])
@@ -68,7 +68,8 @@ export async function fetchMarketplaceHub(options?: {
         isDiscoverySportAllowed(typeof item.sport === 'string' ? item.sport : undefined),
       );
     }
-    settled = settled.slice(0, 10);
+    const paidSettled = settled.filter((item) => Number(item.price) > 0);
+    settled = (paidSettled.length > 0 ? paidSettled : settled).slice(0, 5);
     if (settled.length > 0) {
       items = settled;
       total = settled.length;

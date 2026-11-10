@@ -72,10 +72,10 @@ export const PLAY_STORE_URL =
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() || '';
 
 const SITE_DESCRIPTION_FOOTBALL =
-  'Ghana tipster marketplace for football. Purchase-protected paid picks refund to your wallet if they lose. Free 7-day Rollover when signed in. AccaSure1X2 VIP stays paid. Not a bookmaker. 18+.';
+  'Ghana tipster marketplace for football. Paid marketplace picks refund to your wallet if they lose. VIP plans have a separate refund rule. Free 7-day Rollover when signed in. Not a bookmaker. 18+.';
 
 const SITE_DESCRIPTION_MULTISPORT =
-  'Ghana tipster marketplace with purchase-protected picks refunded if they lose. Football first, more sports when available. Free signed-in tools plus VIP plans. Not a bookmaker. 18+.';
+  'Ghana tipster marketplace. Paid marketplace picks refund if they lose; VIP plans have a separate refund rule. Football first, more sports when available. Free signed-in tools plus VIP. Not a bookmaker. 18+.';
 
 export const SITE_DESCRIPTION = isFootballOnlyDiscovery()
   ? SITE_DESCRIPTION_FOOTBALL
@@ -99,12 +99,10 @@ const SITE_KEYWORDS_FOOTBALL = [
   'refund if paid football tip loses',
   'tipster wallet refund Ghana',
   'free 7-day football rollover',
-  'AccaSure1X2 VIP tips',
+  'Match Winner Tips VIP',
   '1X2 tipster subscription',
   'football tipster ROI leaderboard',
   'verified football tipster track record',
-  'SportyBet booking code tips Ghana',
-  'Bet9ja booking code tips',
   'free Acca generator signed in',
   'football tipster subscription Africa',
   'public tipster win rate ROI',
@@ -122,8 +120,6 @@ const SITE_KEYWORDS_MULTISPORT = [
   'refund if paid tip loses wallet',
   'football tipster marketplace Africa',
   'verified tipster track record',
-  'SportyBet booking code tips',
-  'Bet9ja booking code tips',
   'tipster ROI leaderboard',
   'VIP tipster subscription',
   'free sports tips signed in',
@@ -152,10 +148,15 @@ export function localizedUrl(path = '', locale: UrlLocale = 'en'): string {
   return normalPath === '/' ? origin() : `${origin()}${normalPath}`;
 }
 
+/**
+ * Canonical + hreflang for a clean path (no query string).
+ * utm_source / utm_medium / utm_campaign must never appear on canonicals.
+ */
 export function seoAlternates(path: string, locale: UrlLocale) {
+  const clean = (path || '/').split('?')[0].split('#')[0] || '/';
   return {
-    canonical: localizedUrl(path, locale),
-    languages: getAlternates(path),
+    canonical: localizedUrl(clean, locale),
+    languages: getAlternates(clean),
   };
 }
 

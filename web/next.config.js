@@ -180,6 +180,26 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/sportybet-booking-codes',
+        destination: '/football-tips-ghana',
+        permanent: true,
+      },
+      {
+        source: '/bet9ja-booking-codes',
+        destination: '/football-tips-ghana',
+        permanent: true,
+      },
+      {
+        source: '/fr/sportybet-booking-codes',
+        destination: '/fr/football-tips-ghana',
+        permanent: true,
+      },
+      {
+        source: '/fr/bet9ja-booking-codes',
+        destination: '/fr/football-tips-ghana',
+        permanent: true,
+      },
+      {
         source: '/admin/vip-tipster',
         destination: '/admin/sure-two-fold',
         permanent: true,

@@ -32,11 +32,11 @@ describe('acca desk daily cap', () => {
     for (const tipster of ACCA_DESK_TIPSTERS) {
       if (tipster.username === 'BankHalf') {
         expect(tipster.maxPerDay).toBe(1);
-        expect(tipster.bio).toMatch(/One 2-fold a day/);
+        expect(tipster.bio).toMatch(/One two-match pick a day/);
         continue;
       }
       if (tipster.username === 'AccaSure1X2') {
-        expect(tipster.bio).toMatch(/VIP subscribers/);
+        expect(tipster.bio).toMatch(/Match Winner|VIP desk|Rollover/i);
         continue;
       }
       expect(tipster.bio).toMatch(/Up to 2 free 2-fold picks a day/);

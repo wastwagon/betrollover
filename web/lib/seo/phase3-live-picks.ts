@@ -46,7 +46,7 @@ async function fetchJson(path: string): Promise<unknown | null> {
 
 /** Best-effort live lists for Phase 3 hubs. Falls back across endpoints. */
 export async function fetchPhase3LivePicks(
-  kind: 'booking' | 'today' | 'settled' | 'btts' | 'over25' | 'ghana' | undefined,
+  kind: 'today' | 'settled' | 'btts' | 'over25' | 'ghana' | undefined,
   limit = 8,
 ): Promise<Phase3LiveItem[]> {
   if (!kind) return [];
@@ -56,18 +56,6 @@ export async function fetchPhase3LivePicks(
     return data ? toLiveItems(asItems(data), limit) : [];
   }
 
-  if (kind === 'booking') {
-    const data =
-      (await fetchJson(`/api/v1/accumulators/marketplace/public?limit=24&hasBookingCode=1`)) ||
-      (await fetchJson(`/api/v1/accumulators/marketplace/public?limit=24`));
-    if (!data) return [];
-    const items = asItems(data).filter((p) => {
-      const code = (p as { bookingCode?: string | null }).bookingCode;
-      return typeof code === 'string' && code.trim().length > 0;
-    });
-    const chosen = items.length > 0 ? items : asItems(data);
-    return toLiveItems(chosen, limit);
-  }
 
   // today / market hubs: marketplace football slice
   const data = await fetchJson(`/api/v1/accumulators/marketplace/public?limit=${limit}&sport=football`);

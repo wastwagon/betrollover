@@ -1,6 +1,11 @@
 /**
- * Public-facing pick titles for SEO, H1, and list link text.
- * Pattern: "[Home] vs [Away] Prediction: [Market] Tip, [D Mon YYYY]"
+ * Public-facing pick titles for SEO, H1, list link text and share copy.
+ *
+ * Multi-match: "2-match pick: [Home1] vs [Away1] + [Home2] vs [Away2], [D Mon YYYY]"
+ * Single: "[Home] vs [Away], [D Mon YYYY]"
+ *
+ * Publishers may append a machine stamp " · YYYY-MM-DD" (desk day) and/or " · #id".
+ * Strip those for display with stripPickTitleMachineStamp / displayPickTitle.
  */
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const;
@@ -32,41 +37,81 @@ function parseTeamsFromMatchDescription(desc: string | null | undefined): { home
   return { home, away };
 }
 
-function marketLabelFromLeg(leg: PickSeoTitleLeg): string {
-  const pred = (leg.prediction || '').trim();
-  if (pred && pred !== '—' && !/^selection\s+\d+$/i.test(pred)) return pred;
-  const key = (leg.outcomeKey || '').trim();
-  return key || 'Tip';
+function teamsFromLeg(leg: PickSeoTitleLeg): { home: string; away: string } | null {
+  if (leg.homeTeam?.trim() && leg.awayTeam?.trim()) {
+    return { home: leg.homeTeam.trim(), away: leg.awayTeam.trim() };
+  }
+  return parseTeamsFromMatchDescription(leg.matchDescription);
+}
+
+/** Remove desk-day ISO stamp and prediction-id suffix for public display. */
+export function stripPickTitleMachineStamp(title: string | null | undefined): string {
+  let t = (title || '').trim();
+  if (!t) return '';
+  t = t.replace(/\s·\s#\d+\s*$/u, '').trim();
+  t = t.replace(/\s·\s\d{4}-\d{2}-\d{2}\s*$/u, '').trim();
+  return t;
 }
 
 /**
- * Build "[Home] vs [Away] Prediction: [Market] Tip, [D Mon YYYY]".
+ * Build public SEO title from legs.
  * Falls back to null when teams are missing so callers can keep an existing title.
  */
 export function buildPickSeoTitle(legs: PickSeoTitleLeg[]): string | null {
   const list = Array.isArray(legs) ? legs.filter(Boolean) : [];
   if (list.length === 0) return null;
 
-  const first = list[0];
-  const fromFields =
-    first.homeTeam?.trim() && first.awayTeam?.trim()
-      ? { home: first.homeTeam.trim(), away: first.awayTeam.trim() }
-      : parseTeamsFromMatchDescription(first.matchDescription);
-  if (!fromFields) return null;
+  const pairs: { home: string; away: string }[] = [];
+  for (const leg of list) {
+    const teams = teamsFromLeg(leg);
+    if (!teams) continue;
+    pairs.push(teams);
+  }
+  if (pairs.length === 0) return null;
 
-  const market = marketLabelFromLeg(first);
   const dateStr =
-    formatPickKickoffDate(first.matchDate) ||
-    list.map((l) => formatPickKickoffDate(l.matchDate)).find(Boolean) ||
-    null;
+    list.map((l) => formatPickKickoffDate(l.matchDate)).find(Boolean) || null;
 
-  const base = `${fromFields.home} vs ${fromFields.away} Prediction: ${market} Tip`;
+  if (pairs.length === 1) {
+    const base = `${pairs[0].home} vs ${pairs[0].away}`;
+    return dateStr ? `${base}, ${dateStr}` : base;
+  }
+
+  const matchList = pairs.map((p) => `${p.home} vs ${p.away}`).join(' + ');
+  const n = pairs.length;
+  const base = `${n}-match pick: ${matchList}`;
   return dateStr ? `${base}, ${dateStr}` : base;
 }
 
-/** True for legacy AI titles like "Single (2026-11-10) #4094". */
+/**
+ * Prefer SEO title from legs; otherwise strip machine stamps from stored title.
+ * Replaces legacy desk / generic titles when legs are available.
+ */
+export function displayPickTitle(
+  storedTitle: string | null | undefined,
+  legs: PickSeoTitleLeg[],
+): string {
+  const seo = buildPickSeoTitle(legs);
+  const stored = stripPickTitleMachineStamp(storedTitle);
+  if (seo && (!stored || isLegacyGenericPickTitle(storedTitle) || isLegacyGenericPickTitle(stored))) {
+    return seo;
+  }
+  if (seo && stored.includes('· #')) return seo;
+  return stored || seo || 'Football pick';
+}
+
+/** True for legacy AI / Acca Desk titles that should not be shown publicly. */
 export function isLegacyGenericPickTitle(title: string | null | undefined): boolean {
   const t = (title || '').trim();
   if (!t) return true;
-  return /^(Single|2-Pick Acca)(\s*\(|$)/i.test(t) || /^Pick\s*#?\d+$/i.test(t);
+  if (/^(Single|2-Pick Acca)(\s*\(|$)/i.test(t)) return true;
+  if (/^Pick\s*#?\d+$/i.test(t)) return true;
+  // Desk / publisher stamps: "… · Early · 2-fold @ 2.37 · 2026-11-10"
+  if (/\b2-fold\s*@/i.test(t)) return true;
+  if (/·\s*(Early|Afternoon|Evening|Midnight)\s*·/i.test(t)) return true;
+  // Old "Safe · Mixed Markets · …" / "Sure · 1X2 · …" risk·market labels
+  if (/^(Sure|Safe|Medium|High|Low Odds|Medium Odds|High Odds)\s*·/i.test(t) && /·/.test(t)) {
+    return true;
+  }
+  return false;
 }

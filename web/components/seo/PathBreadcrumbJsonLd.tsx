@@ -6,8 +6,7 @@ import { getLocale } from '@/lib/i18n';
 const LABEL: Record<string, string> = {
   about: 'About',
   'acca-generator': 'Acca generator',
-  'bet9ja-booking-codes': 'Bet9ja booking codes',
-  'btts-predictions': 'BTTS predictions',
+  'btts-predictions': 'Both teams to score predictions',
   'buy-football-tips': 'Buy football tips',
   contact: 'Contact',
   coupons: 'Picks',
@@ -27,7 +26,6 @@ const LABEL: Record<string, string> = {
   'over-2-5-goals-predictions': 'Over 2.5 goals predictions',
   resources: 'Resources',
   rollover: 'Rollover',
-  'sportybet-booking-codes': 'SportyBet booking codes',
   subscriptions: 'Subscriptions',
   support: 'Support',
   tipsters: 'Tipsters',

@@ -1,19 +1,30 @@
 import type { Metadata } from 'next';
-import { seoAlternates } from '@/lib/site-config';
-import { getLocale } from '@/lib/i18n';
+import { seoAlternates, localizedUrl } from '@/lib/site-config';
+import { getLocale, buildT } from '@/lib/i18n';
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
+  const t = buildT(locale);
+  const title = t('support.title');
+  const description =
+    locale === 'fr'
+      ? 'Contact support et litiges BetRollover : support@betrollover.com, tickets sur /support, règle de remboursement. Pas un bookmaker. 18+.'
+      : 'BetRollover support and disputes: support@betrollover.com, tickets on /support, refund rule links. Tipster marketplace — not a bookmaker. 18+.';
   return {
-    title: 'Support & Disputes',
-    description: 'Get help, raise a dispute, or report an issue. Our support team reviews all tickets promptly.',
+    title,
+    description,
     alternates: seoAlternates('/support', locale),
     openGraph: {
-      title: 'Support & Disputes',
-      description:
-        'Raise a support ticket or dispute. Support replies are typically within 24 hours (Mon–Fri); wallet and payment disputes within 48 hours.',
+      url: localizedUrl('/support', locale),
+      title,
+      description,
+      type: 'website',
     },
-    robots: { index: false, follow: true },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+    },
   };
 }
 

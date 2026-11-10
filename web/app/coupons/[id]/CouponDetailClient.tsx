@@ -19,7 +19,7 @@ import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
 import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { EscrowPurchaseTimeline } from '@/components/EscrowPurchaseTimeline';
 import { EscrowRefundReceipt } from '@/components/EscrowRefundReceipt';
-import { buildPickSeoTitle, formatFootballOutcomeLabel, isLegacyGenericPickTitle } from '@betrollover/shared-types';
+import { displayPickTitle, formatFootballOutcomeLabel } from '@betrollover/shared-types';
 import { BookingCodeCopyBlock } from '@/components/BookingCodeCopyBlock';
 import { PickShareButtons } from '@/components/PickShareButtons';
 import { IconPicks, IconShield, IconLock } from '@/components/ios/icons';
@@ -67,6 +67,7 @@ interface Tipster {
   isVerified?: boolean;
   tipsterType?: string | null;
   winRate: number;
+  roi?: number;
   totalPicks: number;
   wonPicks: number;
   lostPicks: number;
@@ -533,22 +534,16 @@ export default function CouponDetailPage({
           ← {t('nav.marketplace')}
         </Link>
         <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)] mb-6 tracking-tight min-w-0 break-words">
-          {(() => {
-            const fromLegs = buildPickSeoTitle(
-              coupon.picks.map((p) => ({
-                homeTeam: p.homeTeamName,
-                awayTeam: p.awayTeamName,
-                matchDescription: p.matchDescription,
-                prediction: p.redacted ? undefined : p.prediction,
-                matchDate: p.matchDate,
-              })),
-            );
-            const stored = (coupon.title || '').trim();
-            if (fromLegs && (!stored || isLegacyGenericPickTitle(stored) || stored.includes('· #'))) {
-              return fromLegs;
-            }
-            return stored.replace(/\s·\s#\d+\s*$/, '').trim() || fromLegs || stored;
-          })()}
+          {displayPickTitle(
+            coupon.title,
+            coupon.picks.map((p) => ({
+              homeTeam: p.homeTeamName,
+              awayTeam: p.awayTeamName,
+              matchDescription: p.matchDescription,
+              prediction: p.redacted ? undefined : p.prediction,
+              matchDate: p.matchDate,
+            })),
+          )}
         </h1>
 
         {Number(coupon.price) > 0 ? (
@@ -721,7 +716,7 @@ export default function CouponDetailPage({
 
             {picksHidden ? (
               <>
-                <div className="mb-4 p-4 rounded-2xl bg-[var(--accent-light)] border border-[var(--accent)]/30 flex gap-3 min-w-0">
+                <div className="mb-4 p-4 rounded-2xl bg-[var(--accent-light)] border border-[var(--accent)]/30 flex gap-3 min-w-0 pick-paywall">
                   <IconLock className="w-6 h-6 shrink-0 text-[var(--accent)]" aria-hidden />
                   <div className="min-w-0">
                     <p className="font-semibold text-[var(--text)]">{t('pick_detail.selections_locked_title')}</p>
@@ -1115,12 +1110,18 @@ export default function CouponDetailPage({
                       <p className="text-xs text-[var(--text-muted)]">@{coupon.tipster.username}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
                     <div className="text-center">
                       <p className="text-sm font-semibold text-[var(--text)]">
                         {coupon.tipster.winRate != null ? `${Number(coupon.tipster.winRate).toFixed(0)}%` : '—'}
                       </p>
                       <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wide">{t('pick_detail.tipster_grid_win_rate')}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold text-[var(--text)]">
+                        {coupon.tipster.roi != null ? `${Number(coupon.tipster.roi).toFixed(1)}%` : '—'}
+                      </p>
+                      <p className="text-[10px] text-[var(--text-muted)] tracking-wide">{t('pick_detail.tipster_grid_roi')}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-sm font-semibold text-[var(--text)]">{coupon.tipster.totalPicks}</p>
@@ -1146,7 +1147,16 @@ export default function CouponDetailPage({
               <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-4">
                 <PickShareButtons
                   couponId={coupon.id}
-                  title={coupon.title}
+                  title={displayPickTitle(
+                    coupon.title,
+                    coupon.picks.map((p) => ({
+                      homeTeam: p.homeTeamName,
+                      awayTeam: p.awayTeamName,
+                      matchDescription: p.matchDescription,
+                      prediction: p.redacted ? undefined : p.prediction,
+                      matchDate: p.matchDate,
+                    })),
+                  )}
                   tipsterName={coupon.tipster?.displayName}
                   totalOdds={Number(coupon.totalOdds)}
                   isFree={isOpenFree}

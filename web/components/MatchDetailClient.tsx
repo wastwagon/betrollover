@@ -129,16 +129,16 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
               {t('match.link_predictions_today')}
             </Link>
             {' · '}
-            <Link href="/marketplace?sport=football" className="font-semibold text-[var(--primary)] hover:underline">
+            <a href="#match-related-picks" className="font-semibold text-[var(--primary)] hover:underline">
               {t('match.browse_picks')}
-            </Link>
+            </a>
             {' · '}
             <Link href="/btts-predictions" className="font-semibold text-[var(--primary)] hover:underline">
-              BTTS
+              {t('match.link_btts')}
             </Link>
             {' · '}
             <Link href="/over-2-5-goals-predictions" className="font-semibold text-[var(--primary)] hover:underline">
-              Over 2.5
+              {t('match.link_over25')}
             </Link>
           </p>
         </section>
@@ -281,7 +281,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
           </div>
         </div>
 
-        <section className="mb-10">
+        <section id="match-related-picks" className="mb-10 scroll-mt-24">
           <div className="flex items-end justify-between gap-3 mb-4">
             <div>
               <h2 className="text-lg font-semibold text-[var(--text)]">{t('match.related_picks_title')}</h2>

@@ -114,7 +114,7 @@ export function matchPreviewParagraphs(detail: PublicFixtureDetail): string[] {
 
   if (detail.relatedPicks.total > 0) {
     paras.push(
-      `${detail.relatedPicks.total} public prediction${detail.relatedPicks.total === 1 ? '' : 's'} currently link to this match. Free tips may need sign-in to reveal selections. Paid marketplace tips show price and purchase protection on the tip fee. Optional SportyBet or Bet9ja booking codes appear only after reveal when the tipster attached one.`,
+      `${detail.relatedPicks.total} public prediction${detail.relatedPicks.total === 1 ? '' : 's'} currently link to this match. Teams, league, kickoff, bet type and odds stay public without sign-in. Tipster write-ups, buying and comments need an account. Paid marketplace tips refund the tip fee if they lose. BetRollover does not place bets.`,
     );
   } else {
     paras.push(

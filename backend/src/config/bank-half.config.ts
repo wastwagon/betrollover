@@ -13,11 +13,11 @@ import type { AccaDeskSlotKey } from './acca-desk-slots';
 import { VIP_BLACKLIST_LEAGUE_API_IDS } from './vip-tipster.config';
 
 export const BANK_HALF_USERNAME = 'BankHalf';
-export const BANK_HALF_DISPLAY_NAME = 'Bank · Half';
+export const BANK_HALF_DISPLAY_NAME = 'First-half Home Tips';
 export const BANK_HALF_STRATEGY_ID = 'bank_half_ht_home';
 
 export const BANK_HALF_BIO =
-  'Bank · Half: two first-half Home wins (1.47–1.60). Combined 2.20–2.50. One 2-fold a day when a senior-league pair exists — no cups, no youth. Educational — not guaranteed. 18+.';
+  'AI tipster. Two first-half Home wins (1.47–1.60). Combined 2.20–2.50. One two-match pick a day when a senior-league pair exists — no cups, no youth. Educational — not guaranteed. 18+.';
 
 /** Reuse Safe FH1X2 art until a dedicated avatar ships. */
 export const BANK_HALF_AVATAR_URL = '/avatars/acca_safe_fh1x2.png?v=2';

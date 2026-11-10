@@ -46,14 +46,13 @@ export type AccaRiskProfile = {
 };
 
 /**
- * Risk bands (per leg).
- * Sure = ultra-short favorites (often DC / O1.5) for maxi-style small combines.
- * Safe / Medium / High keep their prior bands so existing user behaviour is unchanged.
+ * Risk bands (per leg). Keys stay sure/safe/medium/high for API stability.
+ * Public labels are odds bands only (Lowest / Low / Medium / High Odds).
  */
 export const ACCA_RISK_PROFILES: readonly AccaRiskProfile[] = [
   {
     key: 'sure',
-    label: 'Sure',
+    label: 'Lowest Odds',
     description:
       'Shortest per-leg prices — often favorites / DC / totals. Higher hit-rate per leg; still not guaranteed.',
     oddMin: 1.2,
@@ -62,7 +61,7 @@ export const ACCA_RISK_PROFILES: readonly AccaRiskProfile[] = [
   },
   {
     key: 'safe',
-    label: 'Safe',
+    label: 'Low Odds',
     description: 'Shorter per-leg prices — steadier singles, still multiplies with more fixtures.',
     oddMin: 1.4,
     oddMax: 1.75,
@@ -70,7 +69,7 @@ export const ACCA_RISK_PROFILES: readonly AccaRiskProfile[] = [
   },
   {
     key: 'medium',
-    label: 'Medium',
+    label: 'Medium Odds',
     description: 'Balanced per-leg prices — mix of value and hit-rate.',
     oddMin: 1.7,
     oddMax: 2.4,
@@ -78,7 +77,7 @@ export const ACCA_RISK_PROFILES: readonly AccaRiskProfile[] = [
   },
   {
     key: 'high',
-    label: 'High',
+    label: 'High Odds',
     description: 'Longer per-leg prices — bigger upside, lower hit-rate per leg.',
     oddMin: 2.2,
     oddMax: 3.8,
@@ -86,7 +85,7 @@ export const ACCA_RISK_PROFILES: readonly AccaRiskProfile[] = [
   },
 ] as const;
 
-/** Default to Safe (not Sure): short-ish prices without implying a must-win first impression. */
+/** Default to Low Odds band (key: safe): short-ish prices without a must-win first impression. */
 export const DEFAULT_ACCA_RISK: AccaRiskLevel = 'safe';
 
 /** Best-practice defaults for first-time UI. */

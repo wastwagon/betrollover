@@ -8,6 +8,7 @@ import {
   fetchPublicCouponMeta,
 } from '@/lib/seo/public-content';
 import { BreadcrumbJsonLd } from '@/components/BreadcrumbJsonLd';
+import { PaywalledContentJsonLd } from '@/components/seo/PaywalledContentJsonLd';
 import { ProductOfferJsonLd } from '@/components/seo/ProductOfferJsonLd';
 
 export async function generateMetadata({
@@ -31,7 +32,7 @@ export async function generateMetadata({
     return {
       title: `Football pick #${id}`,
       description:
-        'View this football tipster pick on BetRollover. Sign in if the slip is premium or not yet public.',
+        'View this football tipster pick on BetRollover. Public preview shows teams and odds; buy or sign in for full details.',
       alternates,
       openGraph: { url: alternates.canonical },
       robots: { index: false, follow: true },
@@ -102,6 +103,9 @@ export default async function CouponDetailLayout({
             },
           ]}
         />
+      ) : null}
+      {coupon && (paid || coupon.requiresSubscription === true) ? (
+        <PaywalledContentJsonLd url={pageUrl} headline={title} />
       ) : null}
       {children}
     </>

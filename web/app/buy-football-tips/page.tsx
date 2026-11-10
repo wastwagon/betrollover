@@ -105,7 +105,6 @@ export default async function BuyFootballTipsPage() {
     { question: t('buy.faq_q1'), answer: t('buy.faq_a1') },
     { question: t('buy.faq_q2'), answer: t('buy.faq_a2') },
     { question: t('buy.faq_q3'), answer: t('buy.faq_a3') },
-    { question: t('buy.faq_q4'), answer: t('buy.faq_a4') },
   ];
 
   const productItems = plans.map((row) => {
@@ -185,7 +184,10 @@ export default async function BuyFootballTipsPage() {
                 const price = Number(row.package.price);
                 const included =
                   row.package.includedSlipsPerPeriod != null
-                    ? `Up to ${row.package.includedSlipsPerPeriod} VIP slips per ${days}-day period.`
+                    ? t('buy.included_up_to', {
+                        count: String(row.package.includedSlipsPerPeriod),
+                        days: String(days),
+                      })
                     : t('buy.vip_included');
                 return (
                   <li
@@ -194,29 +196,26 @@ export default async function BuyFootballTipsPage() {
                   >
                     <p className="font-semibold text-[var(--text)]">{name}</p>
                     <p className="mt-1 text-[var(--text-muted)]">
-                      Tipster: {tipsterName}
+                      {t('buy.tipster_label')}:{' '}
                       {row.tipster?.username ? (
-                        <>
-                          {' '}
-                          (
-                          <Link
-                            href={`/tipsters/${encodeURIComponent(row.tipster.username)}`}
-                            className="font-semibold text-[var(--primary)] hover:underline"
-                          >
-                            @{row.tipster.username}
-                          </Link>
-                          )
-                        </>
-                      ) : null}
+                        <Link
+                          href={`/tipsters/${encodeURIComponent(row.tipster.username)}`}
+                          className="font-semibold text-[var(--primary)] hover:underline"
+                        >
+                          {tipsterName}
+                        </Link>
+                      ) : (
+                        tipsterName
+                      )}
                     </p>
                     <p className="mt-1 text-[var(--text-muted)]">
                       {automated ? t('buy.vip_automated_note') : t('buy.vip_human_note')}
                     </p>
                     <p className="mt-2 text-[var(--text)]">
-                      Price: <strong>GHS {price.toFixed(2)}</strong>
+                      {t('buy.price_label')}: <strong>GHS {price.toFixed(2)}</strong>
                     </p>
                     <p className="text-[var(--text)]">
-                      Length: <strong>{days} days</strong>
+                      {t('buy.length_label')}: <strong>{t('buy.days_unit', { days: String(days) })}</strong>
                     </p>
                     <p className="mt-2 text-[var(--text-muted)]">{included}</p>
                     <p className="mt-2 text-[var(--text-muted)]">{t('buy.vip_refund_rule')}</p>
@@ -225,7 +224,7 @@ export default async function BuyFootballTipsPage() {
                         href={`/subscriptions/checkout?packageId=${row.package.id}`}
                         className="font-semibold text-[var(--primary)] hover:underline"
                       >
-                        Open checkout for {name}
+                        {t('buy.open_checkout', { name })}
                       </Link>
                     </p>
                   </li>
@@ -245,9 +244,9 @@ export default async function BuyFootballTipsPage() {
           <h2 className="text-lg font-semibold mt-6">{t('buy.regions_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('buy.regions_body')}</p>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            Marketplace paid picks: tip price refunded to your BetRollover wallet if the pick settles lost or void.{' '}
+            {t('buy.marketplace_refund_plain')}{' '}
             <Link href="/how-it-works#refund-rule" className="font-semibold text-[var(--primary)] hover:underline">
-              Full refund rule
+              {t('buy.full_refund_rule_link')}
             </Link>
             .
           </p>

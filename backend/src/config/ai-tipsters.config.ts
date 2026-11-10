@@ -131,7 +131,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   },
   {
     username: 'SteadyEddie',
-    display_name: 'Away Value',
+    display_name: 'Away Tips',
     bio: 'Away win value band 2.20–4.00. Medium API bar (≥48%), positive EV. Distinct from home favorites.',
     avatar_url: '/avatars/steady_eddie.png',
     personality: {
@@ -549,7 +549,7 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   },
   {
     username: 'OverUnderGuru',
-    display_name: 'Over 2.5 Value',
+    display_name: 'Over 2.5 Tips',
     bio: 'Over 2.5 @ 1.90–2.80 without under_over confirm. Value lane vs TheBankroller (confirmed overs).',
     avatar_url: '/avatars/over_under_guru.png',
     personality: {
@@ -611,8 +611,8 @@ export const AI_TIPSTERS: AiTipsterConfig[] = [
   },
   {
     username: 'midweek-value',
-    display_name: 'Midweek Value',
-    bio: 'Automated AI tipster. Away wins on Tue–Thu only. Day-scoped road value vs SteadyEddie / ChampionshipChamp. Educational — not guaranteed. 18+.',
+    display_name: 'Midweek Away Tips',
+    bio: 'AI tipster. Away wins on Tue–Thu only. Day-scoped road tips vs SteadyEddie / ChampionshipChamp. Educational — not guaranteed. 18+.',
     avatar_url: '/avatars/late_bloomer.png',
     personality: {
       strategy_id: 'midweek_away',

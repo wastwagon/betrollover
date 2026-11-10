@@ -27,6 +27,7 @@ import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entit
 import { Fixture } from '../fixtures/entities/fixture.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
+import { buildPickSeoTitle } from '@betrollover/shared-types';
 import { AccaGeneratorService } from './acca-generator.service';
 import { VipTipsterSetupService } from './vip-tipster-setup.service';
 export type VipTipsterRunResult = {
@@ -280,11 +281,19 @@ export class VipTipsterPublisherService {
           continue;
         }
 
-        const title =
-          `${VIP_TIPSTER.display_name} · ${generated.constructionLabel} · ${slot.label} · 2-fold @ ${generated.combinedOdds} · ${deskDayStr}`.slice(
-            0,
-            255,
-          );
+        const seoTitle = buildPickSeoTitle(
+          generated.legs.map((leg) => ({
+            matchDescription: leg.matchDescription,
+            prediction: leg.prediction,
+            outcomeKey: leg.outcomeKey,
+            matchDate: leg.matchDate,
+          })),
+        );
+        const title = (
+          seoTitle
+            ? `${seoTitle} · ${deskDayStr}`
+            : `${VIP_TIPSTER.display_name} · ${generated.constructionLabel} · ${slot.label} · ${generated.legs.length}-match @ ${Number(generated.combinedOdds).toFixed(2)} · ${deskDayStr}`
+        ).slice(0, 255);
         const description = (
           `${VIP_TIPSTER.bio} ${generated.constructionLabel} · ${slot.label} · ${deskDayStr}. Free pick — educational only.`
         ).slice(0, 2000);

@@ -104,7 +104,7 @@ type GenerateResult = {
 const FALLBACK_RISK_PROFILES: RiskProfile[] = [
   {
     key: 'sure',
-    label: 'Sure',
+    label: 'Lowest Odds',
     description:
       'Shortest per-leg prices — often favorites / DC / totals. Higher hit-rate per leg; still not guaranteed.',
     oddMin: 1.2,
@@ -113,7 +113,7 @@ const FALLBACK_RISK_PROFILES: RiskProfile[] = [
   },
   {
     key: 'safe',
-    label: 'Safe',
+    label: 'Low Odds',
     description: 'Shorter per-leg prices — steadier singles, still multiplies with more fixtures.',
     oddMin: 1.4,
     oddMax: 1.75,
@@ -121,7 +121,7 @@ const FALLBACK_RISK_PROFILES: RiskProfile[] = [
   },
   {
     key: 'medium',
-    label: 'Medium',
+    label: 'Medium Odds',
     description: 'Balanced per-leg prices — mix of value and hit-rate.',
     oddMin: 1.7,
     oddMax: 2.4,
@@ -129,7 +129,7 @@ const FALLBACK_RISK_PROFILES: RiskProfile[] = [
   },
   {
     key: 'high',
-    label: 'High',
+    label: 'High Odds',
     description: 'Longer per-leg prices — bigger upside, lower hit-rate per leg.',
     oddMin: 2.2,
     oddMax: 3.8,

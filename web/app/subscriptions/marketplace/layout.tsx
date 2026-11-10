@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     keywords: [
       'VIP football tipster subscription',
-      'AccaSure1X2 VIP tips',
+      'Match Winner Tips VIP',
       '1X2 tipster subscription',
       'purchase-protected football tips',
     ],

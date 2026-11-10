@@ -30,6 +30,7 @@ import { AccumulatorTicket } from '../accumulators/entities/accumulator-ticket.e
 import { AccumulatorPick } from '../accumulators/entities/accumulator-pick.entity';
 import { Tipster } from '../predictions/entities/tipster.entity';
 import { SyncStatus } from '../fixtures/entities/sync-status.entity';
+import { buildPickSeoTitle } from '@betrollover/shared-types';
 import { AccaGeneratorService } from './acca-generator.service';
 import { AccaDeskSetupService } from './acca-desk-setup.service';
 import { RolloverDeskService } from './rollover-desk.service';
@@ -524,10 +525,19 @@ export class AccaDeskPublisherService {
       };
     }
 
-    const title = `${config.display_name} · ${slot.label} · 2-fold @ ${generated.combinedOdds} · ${deskDayStr}`.slice(
-      0,
-      255,
+    const seoTitle = buildPickSeoTitle(
+      generated.legs.map((leg) => ({
+        matchDescription: leg.matchDescription,
+        prediction: leg.prediction,
+        outcomeKey: leg.outcomeKey,
+        matchDate: leg.matchDate,
+      })),
     );
+    const title = (
+      seoTitle
+        ? `${seoTitle} · ${deskDayStr}`
+        : `${config.display_name} · ${slot.label} · ${generated.legs.length}-match @ ${Number(generated.combinedOdds).toFixed(2)} · ${deskDayStr}`
+    ).slice(0, 255);
     const onRoster = isVipRosterUsername(config.username);
     const description = (
       onRoster

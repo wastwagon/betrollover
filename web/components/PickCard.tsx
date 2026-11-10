@@ -13,9 +13,8 @@ import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { formatLiveFixturePeriod } from '@/lib/live-fixture-display';
 import { tipsterRankBadgeClass, tipsterRankBadgeContent } from '@/lib/tipster-rank-ui';
 import {
-  buildPickSeoTitle,
+  displayPickTitle,
   formatFootballOutcomeLabel,
-  isLegacyGenericPickTitle,
   LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING,
 } from '@betrollover/shared-types';
 import { KickoffUrgencyLine } from '@/components/KickoffUrgencyLine';
@@ -48,6 +47,9 @@ interface Pick {
   awayCountryCode?: string | null;
   homeTeamName?: string | null;
   awayTeamName?: string | null;
+  leagueLabel?: string | null;
+  redacted?: boolean;
+  publicPreview?: boolean;
 }
 
 interface Tipster {
@@ -222,7 +224,8 @@ export function PickCard({
   const displayStatus = result && ['won', 'lost', 'void'].includes(result) ? result : status;
   const statusColor = displayStatus ? resultChipClass(displayStatus) : '';
   const deskBoard = accaDeskBoardBadge(title, tipster?.tipsterType ?? tipster?.tipster_type, picks);
-  const seoTitle = buildPickSeoTitle(
+  const displayTitle = displayPickTitle(
+    title,
     picks.map((p) => ({
       homeTeam: p.homeTeamName,
       awayTeam: p.awayTeamName,
@@ -231,10 +234,6 @@ export function PickCard({
       matchDate: p.matchDate,
     })),
   );
-  const displayTitle =
-    seoTitle && (!title?.trim() || isLegacyGenericPickTitle(title) || title.includes('· #'))
-      ? seoTitle
-      : (title || '').replace(/\s·\s#\d+\s*$/, '').trim() || title;
 
   const handlePurchase = () => {
     if (price > 0) {
@@ -311,8 +310,17 @@ export function PickCard({
                     <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
                       {tipster ? `${tipster.totalPicks}p` : `${totalPicks}p`}
                     </span>
-                    <span className="text-[9px] font-bold text-[var(--success)] tabular-nums">
-                      {tipster?.winRate != null ? `${Number(tipster.winRate).toFixed(0)}%` : '—'}
+                    <span
+                      className="text-[9px] font-bold text-[var(--success)] tabular-nums"
+                      title={
+                        tipster?.winRate != null
+                          ? t('pick_card.win_rate', { rate: Number(tipster.winRate).toFixed(0) })
+                          : undefined
+                      }
+                    >
+                      {tipster?.winRate != null
+                        ? t('pick_card.win_rate', { rate: Number(tipster.winRate).toFixed(0) })
+                        : '—'}
                     </span>
                     {tipster?.roi != null && (
                       <span
@@ -323,8 +331,9 @@ export function PickCard({
                               ? 'text-[var(--destructive)]'
                               : 'text-[var(--text-muted)]'
                         }`}
+                        title={t('pick_card.roi_label', { roi: Number(tipster.roi).toFixed(1) })}
                       >
-                        {`${Number(tipster.roi).toFixed(1)}%`}
+                        {t('pick_card.roi_short', { roi: Number(tipster.roi).toFixed(1) })}
                       </span>
                     )}
                     {tipster &&
@@ -437,7 +446,7 @@ export function PickCard({
             <div className="mb-2">
               <PickShareButtons
                 couponId={id}
-                title={title}
+                title={displayTitle}
                 tipsterName={tipster?.displayName}
                 totalOdds={totalOdds}
                 isFree
@@ -563,15 +572,14 @@ export function PickCard({
                         {p.odds != null ? ` @ ${Number(p.odds || 0).toFixed(2)}` : ''}
                       </span>
                     </div>
-                    {p.matchDate ? (
-                      <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
-                        {formatDateTimeShort(p.matchDate, lang)}
-                      </span>
-                    ) : null}
+                    <span className="text-[9px] text-[var(--text-muted)] tabular-nums flex flex-wrap gap-x-1.5">
+                      {p.leagueLabel ? <span>{p.leagueLabel}</span> : null}
+                      {p.matchDate ? <span>{formatDateTimeShort(p.matchDate, lang)}</span> : null}
+                    </span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-1.5 text-[10px] text-[var(--text-muted)] text-center">
+              <p className="mt-1.5 text-[10px] text-[var(--text-muted)] text-center pick-reasoning-gate">
                 {requiresSubscription
                   ? t('pick_card.subscribe_to_view')
                   : viewOnly || isFree

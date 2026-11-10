@@ -88,12 +88,12 @@ type DeskExtras = Pick<
   | 'allowedOutcomeKeys'
 >;
 
-/** Public risk labels — avoid "Sure" (reads like a guarantee). */
+/** Public risk labels — plain odds bands only (never Sure / Safe / Value / Steady). */
 const RISK_PUBLIC_LABEL: Record<AccaDeskTipsterConfig['riskLevel'], string> = {
   sure: 'Low Odds',
-  safe: 'Steady',
-  medium: 'Value',
-  high: 'Long Odds',
+  safe: 'Medium Odds',
+  medium: 'High Odds',
+  high: 'High Odds',
 };
 
 function desk(
@@ -282,17 +282,17 @@ export const ACCA_MEDIUM_MIX_ODDS = {
 } as const;
 
 const MARKET_SPECS: { key: string; label: string; markets: string[] }[] = [
-  { key: '1x2', label: '1X2 (Match Winner)', markets: ['match_winner'] },
-  { key: 'dc', label: 'Double Chance', markets: ['double_chance'] },
-  { key: 'btts', label: 'BTTS (Yes)', markets: ['btts'] },
-  { key: 'o25', label: 'Over 2.5 Goals', markets: ['over25'] },
-  { key: 'o15', label: 'Over 1.5 Goals', markets: ['over15'] },
-  { key: 'u15', label: 'Under 1.5 Goals', markets: ['under15'] },
-  { key: 'dnb', label: 'Draw No Bet', markets: ['dnb'] },
-  { key: 'fh1x2', label: '1st Half Winner', markets: ['fh_winner'] },
-  { key: 'fh005', label: '1st Half Over 0.5', markets: ['fh_over05'] },
-  { key: 'fh015', label: '1st Half Over 1.5', markets: ['fh_over15'] },
-  { key: 'mix', label: 'Mixed Markets', markets: [...new Set(['over15', ...DEFAULT_ACCA_MARKETS])] },
+  { key: '1x2', label: 'Match result (home, draw or away)', markets: ['match_winner'] },
+  { key: 'dc', label: 'Double chance (two of three results win)', markets: ['double_chance'] },
+  { key: 'btts', label: 'Both teams to score', markets: ['btts'] },
+  { key: 'o25', label: 'Over 2.5 goals', markets: ['over25'] },
+  { key: 'o15', label: 'Over 1.5 goals (2 or more goals)', markets: ['over15'] },
+  { key: 'u15', label: 'Under 1.5 goals', markets: ['under15'] },
+  { key: 'dnb', label: 'Draw no bet', markets: ['dnb'] },
+  { key: 'fh1x2', label: 'First-half match result', markets: ['fh_winner'] },
+  { key: 'fh005', label: 'Goal in the first half (at least 1 goal)', markets: ['fh_over05'] },
+  { key: 'fh015', label: 'Over 1.5 goals in the first half', markets: ['fh_over15'] },
+  { key: 'mix', label: 'Different bet types', markets: [...new Set(['over15', ...DEFAULT_ACCA_MARKETS])] },
 ];
 
 function deskRisksForMarket(marketKey: string): AccaDeskTipsterConfig['riskLevel'][] {

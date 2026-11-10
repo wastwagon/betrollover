@@ -166,7 +166,10 @@ export class PredictionMarketplaceSyncService {
           ? '2-Pick Acca'
           : 'Single'
         : rawTitle || (isMulti ? '2-Pick Acca' : 'Single'));
-    const title = seoTitle ? `${seoTitle} · #${prediction.id}` : `${baseTitle} · #${prediction.id}`;
+    // Public display strips " · #id"; keep it for unique (user_id, title).
+    const title = seoTitle
+      ? `${seoTitle} · #${prediction.id}`
+      : `${baseTitle} · #${prediction.id}`;
     const totalOdds = fixtures.reduce((acc, f) => acc * Number(f.selectionOdds), 1);
 
     const ticket = this.ticketRepo.create({

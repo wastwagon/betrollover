@@ -13,7 +13,7 @@ import { VIP_TIPSTER } from './vip-tipster.config';
 /** Rollover board owner. Do not create a new account. */
 export const ROLLOVER_OWNER_USERNAME = VIP_PACKAGE_OWNER_USERNAME;
 
-export const ROLLOVER_OWNER_DISPLAY_FALLBACK = 'Sure · 1X2';
+export const ROLLOVER_OWNER_DISPLAY_FALLBACK = 'Match Winner Tips';
 
 /**
  * Free public Telegram face. Sure · Two-Fold (SureTwoFold).

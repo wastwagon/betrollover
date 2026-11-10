@@ -34,7 +34,6 @@ import {
 } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { MarketplaceSavedFiltersBar } from '@/components/MarketplaceSavedFiltersBar';
-import { MarketplaceBookingCodesShelf } from '@/components/MarketplaceBookingCodesShelf';
 import type { MarketplaceSavedFilter } from '@/lib/marketplace-saved-filters';
 
 const API_URL = getApiUrl();
@@ -289,25 +288,6 @@ export default function MarketplacePage({
           : { all: dayScoped.length, free: priceFilter === 'free' ? dayScoped.length : 0, paid: priceFilter === 'paid' ? dayScoped.length : 0 },
     };
   }, [picks, footballOnly, dayFilter, priceFilter]);
-
-  const bookingCodeShelfItems = useMemo(() => {
-    return filteredAndSortedPicks
-      .filter(
-        (p) =>
-          !!p.bookmakerKey &&
-          !!p.bookingCode &&
-          (p.picksRevealed === true || purchasedIds.has(p.id)),
-      )
-      .slice(0, 8)
-      .map((p) => ({
-        id: p.id,
-        title: p.title,
-        bookmakerKey: p.bookmakerKey as string,
-        bookingCode: p.bookingCode as string,
-        bookingCodeCopyCount: p.bookingCodeCopyCount ?? 0,
-        tipsterName: p.tipster?.displayName ?? null,
-      }));
-  }, [filteredAndSortedPicks, purchasedIds]);
 
   // Once following is known, prefer "For you" only when URL has no explicit sort yet.
   useEffect(() => {
@@ -894,7 +874,6 @@ export default function MarketplacePage({
           )}
           {!loading && filteredAndSortedPicks.length > 0 && (
             <>
-              <MarketplaceBookingCodesShelf items={bookingCodeShelfItems} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-8 min-w-0">
                 {filteredAndSortedPicks.map((a) => renderMarketplacePickCard(a))}
               </div>

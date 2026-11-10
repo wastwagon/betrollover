@@ -98,11 +98,15 @@ async function HomeBelowFold() {
               <p>{t('home.seo_body_p2')}</p>
               <p>{t('home.seo_body_p3')}</p>
               <p>{t('home.seo_body_p4')}</p>
+              <p>{t('home.seo_body_p5')}</p>
             </div>
             <p className="mt-4 text-sm font-semibold text-[var(--text)]">{t('home.seo_body_links')}</p>
             <nav className="mt-2 flex flex-wrap gap-x-4 gap-y-2" aria-label={t('home.seo_body_links')}>
               <Link href="/football-tips-ghana" className="text-sm font-semibold text-[var(--primary)] hover:underline">
                 {t('home.seo_link_ghana')}
+              </Link>
+              <Link href="/buy-football-tips" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('home.seo_link_buy')}
               </Link>
               <Link href="/how-it-works" className="text-sm font-semibold text-[var(--primary)] hover:underline">
                 {t('home.seo_link_how')}

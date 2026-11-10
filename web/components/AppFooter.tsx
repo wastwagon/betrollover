@@ -56,7 +56,7 @@ export function AppFooter() {
                 <FooterLink href="/football-tips-ghana">{t('footer.ghana_hub')}</FooterLink>
               </li>
               <li>
-                <FooterLink href="/football-predictions-today">Football predictions today</FooterLink>
+                <FooterLink href="/football-predictions-today">{t('footer.predictions_today')}</FooterLink>
               </li>
               <li>
                 <FooterLink href="/track-record">{t('footer.track_record')}</FooterLink>
@@ -71,9 +71,6 @@ export function AppFooter() {
               </li>
               <li>
                 <FooterLink href="/coupons/archive">{t('header.settled_archive')}</FooterLink>
-              </li>
-              <li>
-                <FooterLink href="/sportybet-booking-codes">{t('footer.booking_codes')}</FooterLink>
               </li>
               <li>
                 <FooterLink href="/tipsters">{t('nav.top_tipsters')}</FooterLink>

@@ -9,8 +9,41 @@ import { getLocale, buildT } from '@/lib/i18n';
 import { metaKeywordsFromTranslation } from '@/lib/seo/meta-keywords';
 import { couponDisplayTitle, type PublicCouponMeta } from '@/lib/seo/public-content';
 import { getServerBackendOrigin } from '@/lib/seo/server-backend';
+import { fetchLiveScoresHub } from '@/lib/seo/hub-public-data';
 
 const PATH = '/football-tips-ghana';
+
+type GhanaFixtureRow = {
+  id: number;
+  home: string;
+  away: string;
+  league: string;
+  kickoff?: string;
+};
+
+function fixtureLabel(row: Record<string, unknown>): GhanaFixtureRow | null {
+  const id = Number(row.id ?? row.fixtureId);
+  if (!Number.isFinite(id) || id < 1) return null;
+  const home =
+    (typeof row.homeTeamName === 'string' && row.homeTeamName) ||
+    (typeof row.home === 'string' && row.home) ||
+    '';
+  const away =
+    (typeof row.awayTeamName === 'string' && row.awayTeamName) ||
+    (typeof row.away === 'string' && row.away) ||
+    '';
+  const league =
+    (typeof row.leagueName === 'string' && row.leagueName) ||
+    (typeof row.league === 'string' && row.league) ||
+    '';
+  if (!/ghana/i.test(league)) return null;
+  if (!home || !away) return null;
+  const kickoff =
+    (typeof row.matchDate === 'string' && row.matchDate) ||
+    (typeof row.kickoff === 'string' && row.kickoff) ||
+    undefined;
+  return { id, home, away, league, kickoff };
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -58,7 +91,23 @@ async function fetchLatestSettledPicks(limit = 10): Promise<PublicCouponMeta[]> 
 
 export default async function FootballTipsGhanaPage() {
   const t = buildT(await getLocale());
-  const settled = await fetchLatestSettledPicks(10);
+  const [settled, liveScores] = await Promise.all([
+    fetchLatestSettledPicks(10),
+    fetchLiveScoresHub(60),
+  ]);
+  const ghanaFixtures: GhanaFixtureRow[] = [];
+  if (liveScores) {
+    for (const bucket of [liveScores.live, liveScores.upcoming, liveScores.recent]) {
+      for (const row of bucket) {
+        const parsed = fixtureLabel(row);
+        if (!parsed) continue;
+        if (ghanaFixtures.some((g) => g.id === parsed.id)) continue;
+        ghanaFixtures.push(parsed);
+        if (ghanaFixtures.length >= 8) break;
+      }
+      if (ghanaFixtures.length >= 8) break;
+    }
+  }
   const faqs = [
     { question: t('ghana_hub.faq_q1'), answer: t('ghana_hub.faq_a1') },
     { question: t('ghana_hub.faq_q2'), answer: t('ghana_hub.faq_a2') },
@@ -109,6 +158,24 @@ export default async function FootballTipsGhanaPage() {
               Ghana Premier League predictions
             </Link>
           </p>
+          {ghanaFixtures.length > 0 ? (
+            <ul className="mt-3 space-y-1.5 text-sm text-[var(--text-muted)]">
+              {ghanaFixtures.map((fx) => (
+                <li key={fx.id}>
+                  <Link href={`/matches/${fx.id}`} className="font-semibold text-[var(--primary)] hover:underline">
+                    {fx.home} vs {fx.away} prediction
+                  </Link>
+                  <span>
+                    {' '}
+                    — {fx.league}
+                    {fx.kickoff ? ` · ${new Date(fx.kickoff).toISOString().slice(0, 16).replace('T', ' ')} UTC` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-[var(--text-muted)]">{t('ghana_hub.gpl_empty')}</p>
+          )}
 
           <h2 className="text-lg font-semibold mt-6">{t('ghana_hub.momo_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('ghana_hub.momo_body')}</p>
@@ -140,22 +207,6 @@ export default async function FootballTipsGhanaPage() {
             </Link>
           </p>
 
-          <h2 className="text-lg font-semibold mt-6">{t('ghana_hub.bookies_h')}</h2>
-          <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-            {t('ghana_hub.bookies_body')}{' '}
-            <Link href="/sportybet-booking-codes" className="font-semibold text-[var(--primary)] hover:underline">
-              SportyBet booking codes
-            </Link>
-            {' · '}
-            <Link href="/bet9ja-booking-codes" className="font-semibold text-[var(--primary)] hover:underline">
-              Bet9ja booking codes
-            </Link>
-            {' · '}
-            <Link href="/guides/free-and-paid-picks#booking-codes" className="font-semibold text-[var(--primary)] hover:underline">
-              {t('footer.booking_codes')}
-            </Link>
-          </p>
-
           <h2 className="text-lg font-semibold mt-6">{t('ghana_hub.vs_telegram_h')}</h2>
           <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{t('ghana_hub.vs_telegram_body')}</p>
 
@@ -168,7 +219,7 @@ export default async function FootballTipsGhanaPage() {
             </li>
             <li>
               <Link href="/btts-predictions" className="font-semibold text-[var(--primary)] hover:underline">
-                BTTS predictions
+                Both teams to score predictions
               </Link>
             </li>
             <li>

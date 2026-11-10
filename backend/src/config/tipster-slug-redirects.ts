@@ -13,7 +13,7 @@ export const TIPSTER_SLUG_REDIRECTS: readonly TipsterSlugRedirect[] = [
   {
     oldUsername: 'LateBloomer',
     newUsername: 'midweek-value',
-    displayName: 'Midweek Value',
+    displayName: 'Midweek Away Tips',
   },
   {
     oldUsername: 'HomeHeroes',

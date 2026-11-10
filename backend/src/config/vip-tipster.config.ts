@@ -23,8 +23,8 @@ export const FORMER_FREE_DESK_USERNAMES = ['VipTwoFold', 'TwoFold', 'AccaSureTwo
 
 export const VIP_TIPSTER = {
   username: 'SureTwoFold',
-  display_name: 'Sure · Two-Fold',
-  bio: 'Sure · Two-Fold: two Home wins (about 1.20–1.40). Combined 1.50–1.99. Up to two free slips a day when clustered homes exist. Educational — not guaranteed. 18+.',
+  display_name: 'Low Odds · Two-match',
+  bio: 'Low odds two-match picks: two Home wins (about 1.20–1.40). Combined 1.50–1.99. Up to two free picks a day when clustered homes exist. Educational — not guaranteed. 18+.',
   avatar_url: '/avatars/acca_sure_1x2.png?v=2',
   strategy_id: 'vip_desk_two_fold',
   legs: 2 as const,

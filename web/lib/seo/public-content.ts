@@ -1,7 +1,7 @@
 import type { SupportedLanguage } from '@/lib/i18n';
 import { SITE_URL, getAvatarUrl } from '@/lib/site-config';
 import { getServerBackendOrigin } from '@/lib/seo/server-backend';
-import { buildPickSeoTitle, isLegacyGenericPickTitle } from '@betrollover/shared-types';
+import { displayPickTitle } from '@betrollover/shared-types';
 
 const API = () => `${getServerBackendOrigin()}/api/v1`;
 
@@ -247,9 +247,12 @@ export type PublicCouponMeta = {
   totalOdds?: number | string | null;
   price?: number | string | null;
   result?: string | null;
+  requiresSubscription?: boolean;
   tipster?: {
     displayName?: string | null;
     username?: string | null;
+    winRate?: number | null;
+    roi?: number | null;
   } | null;
   picks?: Array<{
     homeTeamName?: string | null;
@@ -281,7 +284,8 @@ export async function fetchPublicCouponMeta(
 }
 
 export function couponDisplayTitle(coupon: PublicCouponMeta): string {
-  const fromLegs = buildPickSeoTitle(
+  return displayPickTitle(
+    coupon.title,
     (coupon.picks || []).map((p) => ({
       homeTeam: p.homeTeamName,
       awayTeam: p.awayTeamName,
@@ -290,14 +294,7 @@ export function couponDisplayTitle(coupon: PublicCouponMeta): string {
       outcomeKey: p.outcomeKey,
       matchDate: p.matchDate,
     })),
-  );
-  const stored = (coupon.title || '').trim();
-  if (fromLegs && (!stored || isLegacyGenericPickTitle(stored))) return fromLegs;
-  if (fromLegs && stored.includes('· #')) return fromLegs;
-  if (stored && !isLegacyGenericPickTitle(stored)) {
-    return stored.replace(/\s·\s#\d+\s*$/, '').trim() || stored;
-  }
-  return fromLegs || stored || `Football pick #${coupon.id}`;
+  ) || `Football pick #${coupon.id}`;
 }
 
 export function couponMetaTitle(coupon: PublicCouponMeta): string {
@@ -321,7 +318,8 @@ export function couponMetaDescription(coupon: PublicCouponMeta): string {
   const leaguePart = league ? ` ${league}.` : '';
   const oddsPart = odds ? ` Odds ${odds}.` : '';
   return truncateMetaDescription(
-    `${display}. ${priceLabel} by ${tipster}.${leaguePart}${oddsPart} Result: ${resultLabel}. Purchase-protected — not a bookmaker. 18+.`,
+    `${display}. ${priceLabel} by ${tipster}.${leaguePart}${oddsPart} Result: ${resultLabel}. Not a bookmaker. 18+.`,
+    155,
   );
 }
 
