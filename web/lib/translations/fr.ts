@@ -156,7 +156,7 @@ const fr: Record<string, string> = {
   'home.hero_title': 'Marketplace tipsters football avec picks protégés.',
   'home.seo_body_h2': 'Ce qu\'est BetRollover',
   'home.seo_body_p1':
-    'BetRollover est une marketplace de pronostics football basée au Ghana. Un tipster est une personne ou un tipster IA qui publie des tips. Les cotes sont le prix qu\'un bookmaker affiche pour une sélection — nous les montrons pour comparer ; nous ne prenons pas l'argent que vous misez. Les tipsters publient. Vous achetez un tip si vous le souhaitez. Vous ne placez pas de paris sur BetRollover. Nous ne sommes pas un bookmaker. Si vous pariez ensuite, c\'est ailleurs, chez un bookmaker.',
+    'BetRollover est une marketplace de pronostics football basée au Ghana. Un tipster est une personne ou un tipster IA qui publie des tips. Les cotes sont le prix qu\'un bookmaker affiche pour une sélection — nous les montrons pour comparer ; nous ne prenons pas l\'argent que vous misez. Les tipsters publient. Vous achetez un tip si vous le souhaitez. Vous ne placez pas de paris sur BetRollover. Nous ne sommes pas un bookmaker. Si vous pariez ensuite, c\'est ailleurs, chez un bookmaker.',
   'home.seo_body_p2':
     'Le public principal est le Ghana, puis le Nigeria, le Kenya, l\'Afrique du Sud et l\'Afrique francophone. Les portefeuilles utilisent le cedi ghanéen (GHS). Rechargez et retirez avec les méthodes affichées dans votre compte lorsqu\'elles sont actives. Créez un compte, ajoutez de l\'argent, puis achetez un pick ou ouvrez un tip gratuit.',
   'home.seo_body_p3':
@@ -240,8 +240,8 @@ const fr: Record<string, string> = {
   'home.free_tip_badge_free': 'Gratuit',
   'home.marketplace_active_badge': 'Marché',
   'home.marketplace_active_title': 'Activité des meilleurs tipsters',
-    'home.marketplace_active_sub':
-    'Pronostics live des tipsters du classement all-time avec assez de picks terminés et un profit positif pour 100 GHS.',,
+  'home.marketplace_active_sub':
+    'Pronostics live des tipsters du classement all-time avec assez de picks terminés et un profit positif pour 100 GHS.',
   'home.marketplace_active_cta': 'Voir tous les tipsters',
   'home.marketplace_login_to_browse': 'Connectez-vous pour voir les pronostics du marché en direct.',
   'home.how_it_works': 'Comment Ça Marche',
