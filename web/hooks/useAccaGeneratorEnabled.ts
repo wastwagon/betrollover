@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getApiUrl } from '@/lib/site-config';
 
 /**
- * Public Acca Generator flag. Defaults to on so chrome does not flash-hide the tab
+ * Public Accumulator Builder flag. Defaults to on so chrome does not flash-hide the tab
  * when the status request is slow or fails.
  */
 export function useAccaGeneratorEnabled(): boolean {

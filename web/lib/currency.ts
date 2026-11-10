@@ -12,7 +12,7 @@ export interface Currency {
 }
 
 export const CURRENCIES: Currency[] = [
-  { code: 'GHS', symbol: '₵',   name: 'Ghana Cedi',          flag: '🇬🇭' },
+  { code: 'GHS', symbol: 'GHS ', name: 'Ghana Cedi',          flag: '🇬🇭' },
   { code: 'NGN', symbol: '₦',   name: 'Nigerian Naira',       flag: '🇳🇬' },
   { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling',      flag: '🇰🇪' },
   { code: 'ZAR', symbol: 'R',   name: 'South African Rand',   flag: '🇿🇦' },
@@ -67,6 +67,6 @@ export function formatAmount(
 
   return {
     primary: `${currency.symbol}${formatted}`,
-    original: opts.showOriginal ? `₵${val.toFixed(2)}` : undefined,
+    original: opts.showOriginal ? `GHS ${val.toFixed(2)}` : undefined,
   };
 }

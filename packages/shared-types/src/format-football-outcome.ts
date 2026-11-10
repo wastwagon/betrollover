@@ -8,66 +8,83 @@ export function formatFootballOutcomeLabel(outcome: string | null | undefined): 
   const o = raw.toLowerCase();
   switch (o) {
     case 'home':
-      return 'Home Win';
+      return 'Home win';
     case 'away':
-      return 'Away Win';
+      return 'Away win';
     case 'draw':
       return 'Draw';
+    case 'match_winner':
+    case '1x2':
+      return 'Match winner (home, draw or away)';
     case 'btts':
-      return 'BTTS Yes';
+      return 'Both teams to score: Yes';
     case 'over15':
-      return 'Over 1.5';
+      return 'Over 1.5 goals (2 or more goals)';
     case 'under15':
-      return 'Under 1.5';
+      return 'Under 1.5 goals (0 or 1 goal)';
     case 'over25':
-      return 'Over 2.5';
+      return 'Over 2.5 goals (3 or more goals)';
     case 'under25':
-      return 'Under 2.5';
+      return 'Under 2.5 goals (0–2 goals)';
     case 'over35':
-      return 'Over 3.5';
+      return 'Over 3.5 goals (4 or more goals)';
     case 'under35':
-      return 'Under 3.5';
+      return 'Under 3.5 goals (0–3 goals)';
     case 'home_away':
-      return 'Home or Away (12)';
+      return 'Home win or away win (no draw)';
     case 'home_draw':
-      return 'Home or Draw (1X)';
+      return 'Home win or draw';
     case 'draw_away':
-      return 'Draw or Away (X2)';
+      return 'Draw or away win';
     case 'dnb_home':
-      return 'Draw No Bet: Home';
+      return 'Draw no bet: home win';
     case 'dnb_away':
-      return 'Draw No Bet: Away';
+      return 'Draw no bet: away win';
     case 'ht_home':
-      return 'First Half: Home Win';
+      return 'First-half home win';
     case 'ht_away':
-      return 'First Half: Away Win';
+      return 'First-half away win';
     case 'ht_draw':
-      return 'First Half: Draw';
+      return 'First-half draw';
     case 'fh_over05':
-      return 'First Half: Over 0.5';
+      return 'Over 0.5 goals in the first half (at least 1 goal)';
     case 'fh_under05':
-      return 'First Half: Under 0.5';
+      return 'Under 0.5 goals in the first half (no goals)';
     case 'fh_over15':
-      return 'First Half: Over 1.5';
+      return 'Over 1.5 goals in the first half (2 or more goals)';
     case 'fh_under15':
-      return 'First Half: Under 1.5';
+      return 'Under 1.5 goals in the first half (0 or 1 goal)';
     case 'fh_over25':
-      return 'First Half: Over 2.5';
+      return 'Over 2.5 goals in the first half (3 or more goals)';
     case 'fh_under25':
-      return 'First Half: Under 2.5';
+      return 'Under 2.5 goals in the first half (0–2 goals)';
     case 'odd_goals':
-      return 'Odd/Even: Odd';
+      return 'Odd total goals';
     case 'even_goals':
-      return 'Odd/Even: Even';
+      return 'Even total goals';
     case 'home_score_yes':
-      return 'Home Team Score a Goal: Yes';
+      return 'Home team to score: Yes';
     case 'home_score_no':
-      return 'Home Team Score a Goal: No';
+      return 'Home team to score: No';
     case 'away_score_yes':
-      return 'Away Team Score a Goal: Yes';
+      return 'Away team to score: Yes';
     case 'away_score_no':
-      return 'Away Team Score a Goal: No';
-    default:
+      return 'Away team to score: No';
+    default: {
+      // Soften common free-text market titles stored on picks
+      if (/^match\s*winner$/i.test(raw)) return 'Match winner (home, draw or away)';
+      if (/^first\s*half:\s*over\s*0\.5$/i.test(raw)) {
+        return 'Over 0.5 goals in the first half (at least 1 goal)';
+      }
+      if (/^first\s*half:\s*over\s*1\.5$/i.test(raw)) {
+        return 'Over 1.5 goals in the first half (2 or more goals)';
+      }
+      if (/^over\s*2\.5$/i.test(raw)) return 'Over 2.5 goals (3 or more goals)';
+      if (/^over\s*1\.5$/i.test(raw)) return 'Over 1.5 goals (2 or more goals)';
+      if (/^home or away \(12\)$/i.test(raw)) return 'Home win or away win (no draw)';
+      if (/^draw or away \(x2\)$/i.test(raw)) return 'Draw or away win';
+      if (/^home or draw \(1x\)$/i.test(raw)) return 'Home win or draw';
       return raw;
+    }
   }
 }

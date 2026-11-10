@@ -78,12 +78,7 @@ export async function HomeHeroBanner() {
           >
             {t('home.hero_subtitle')}
           </p>
-          <p
-            className="mt-2 max-w-md text-sm font-semibold leading-relaxed text-white sm:text-[15px]"
-            style={{ textShadow: '0 1px 3px rgba(0,0,0,0.65), 0 2px 18px rgba(0,0,0,0.4)' }}
-          >
-            {t('home.hero_escrow_line')}
-          </p>
+          {/* Refund rule shown once in the badge above — avoid repeating hero_escrow_line here. */}
         </div>
 
         <div className="mt-5 flex w-full max-w-md flex-col gap-2.5 sm:mt-7 sm:max-w-none sm:flex-row sm:flex-wrap">

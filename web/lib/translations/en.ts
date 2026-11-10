@@ -61,10 +61,10 @@ const en = {
   'nav.support': 'Support',
   'nav.create_pick': 'Create Pick',
   'nav.create_pick_short': '+Picks',
-  'nav.acca_generator': 'Acca Generator',
-  'nav.acca_generator_short': 'Acca',
-  'nav.rollover': '7-Day Rollover',
-  'nav.rollover_short': 'Rollover',
+  'nav.acca_generator': 'Accumulator Builder',
+  'nav.acca_generator_short': 'Acca Builder',
+  'nav.rollover': '7-Day BetRollover',
+  'nav.rollover_short': '7-Day',
   'nav.pick_tab': 'Create',
 
   // ── Auth ─────────────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ const en = {
   'status.settled': 'Result confirmed',
   'status.cancelled': 'Cancelled',
   'status.refunded': 'Refunded',
-  'status.active': 'Active',
+  'status.active': 'Open',
   'status.inactive': 'Inactive',
   'status.approved': 'Approved',
   'status.rejected': 'Rejected',
@@ -157,7 +157,7 @@ const en = {
 
   // ── Home page ────────────────────────────────────────────────────────────
   'home.hero_title': 'Football predictions with purchase protection.',
-  'home.hero_subtitle': 'Buy tips from tipsters. Paid single picks are refunded if they lose. VIP plans have their own refund rule. Built in Ghana for Africa and a global match audience.',
+  'home.hero_subtitle': 'Buy tips from tipsters. Built in Ghana for football fans across Africa.',
   'home.hero_escrow_line': 'Paid single picks are refunded if they lose. VIP plans have their own refund rule.',
   'home.hero_informational_note': 'Tipster predictions are for information and education only. BetRollover is not a bookmaker or betting operator. 18+ only.',
   'home.hero_cta_primary': 'Buy today\'s tips',
@@ -168,20 +168,39 @@ const en = {
   'home.hero_image_alt': 'Football stadium lights at night — BetRollover football predictions marketplace',
   'home.seo_body_h2': 'What BetRollover is',
   'home.seo_body_p1':
-    'BetRollover is a football predictions marketplace based in Ghana. A tipster is a person or AI desk that publishes football tips. Odds are the price a bookmaker quotes for a selection — we show them so you can compare tips; we do not take your stake. Tipsters publish tips. You buy a tip if you want it. You do not place bets on BetRollover. We are not a bookmaker. If you later place a bet, you do that yourself with a bookmaker outside this site.',
+    'BetRollover is a football predictions marketplace based in Ghana. A tipster is a person or AI tipster that publishes football tips. Odds are the price a bookmaker quotes for a selection — we show them so you can compare tips; we do not take the money you bet. Tipsters publish tips. You buy a tip if you want it. You do not place bets on BetRollover. We are not a bookmaker. If you later place a bet, you do that yourself with a bookmaker outside this site.',
   'home.seo_body_p2':
-    'The main audience is Ghana, then Nigeria, Kenya, South Africa, and Francophone Africa. Wallets use Ghana cedis (GHS). You can top up and withdraw with the payment methods shown in your account when they are live. Create an account, add money to your wallet, then buy a pick or open a free tip.',
+    'The main audience is Ghana, then Nigeria, Kenya, South Africa, and Francophone Africa. Wallets use Ghana cedis (GHS). Payment methods for top-up and withdrawal are listed in your wallet when they are live (gateway migration in progress). Create an account, add money to your wallet, then buy a pick or open a free tip.',
   'home.seo_body_p3':
     'Paid marketplace predictions use purchase protection. When you buy a paid pick, the tipster is not paid until every selection has a result confirmed. If the pick loses, the purchase price is refunded to your BetRollover wallet automatically. Free tips cost nothing because you did not pay a tip fee. VIP plans are separate subscriptions. Losing VIP picks are not refunded the same way as paid marketplace picks. A VIP plan fee is returned only if zero VIP picks are published in your plan period.',
   'home.seo_body_p4':
-    'Before you buy, read each tipster’s result-confirmed record: win rate, profit per GHS 100 bet, and recent form. Use the marketplace for today’s tips, the Ghana guide for local context, the buy page for VIP plans in plain text, and How it works for refund steps. Short guides cover purchase protection, tipster stats, and leaderboard ranking. Verified means the account passed platform checks — it is not a promise of profit.',
+    'Before you buy, read each tipster’s record of finished picks: win rate, profit per GHS 100 bet, and recent form. Use the marketplace for today’s tips, the Ghana guide for local context, the buy page for VIP plans, and How it works for refund steps. Short guides cover purchase protection, tipster stats, and leaderboard ranking. Verified means the account passed platform checks — it is not a promise of profit.',
   'home.seo_body_p5':
-    'Search engines and visitors see the same public tip preview: teams, league, kickoff, bet type, odds, tipster name, win rate and profit per GHS 100 bet. Sign in to read tipster write-ups, buy, follow, set alerts, like or comment. 18+ only. Predictions are for information. Gamble responsibly if you choose to bet elsewhere.',
+    'You can see the teams, odds and tipster stats without signing in. Sign in to read the tipster\'s write-up, buy, follow, set alerts, like or comment. 18+ only. Predictions are for information. Use tips responsibly if you choose to bet elsewhere.',
   'home.seo_body_links': 'Useful pages',
   'home.seo_link_ghana': 'Football predictions in Ghana',
   'home.seo_link_buy': 'Buy football tips and VIP plans',
   'home.seo_link_how': 'How it works and refunds',
   'home.seo_link_guides': 'Short guides',
+
+  'pick_card.view_match': 'View {home} vs {away} prediction',
+  'pick_card.view_multi': 'View multi-match prediction',
+  'pick_card.picks_abbrev': '{n} picks',
+  'pick_card.picks_abbrev_one': '1 pick',
+  'home.sellers_cta_title': 'Sell your football predictions on BetRollover',
+  'home.sellers_cta_btn': 'Become a tipster',
+  'home.news_block_title': 'Latest football news and guides',
+  'home.faq_title': 'Home FAQ',
+  'home.faq_q1': 'Is BetRollover a betting company?',
+  'home.faq_a1': 'No. BetRollover is a football predictions marketplace. You buy tipster information here. You do not place bets on BetRollover.',
+  'home.faq_q2': 'What is purchase protection?',
+  'home.faq_a2': 'If a paid marketplace pick finishes as a loss or void, the tip price is refunded to your BetRollover wallet after settlement. This does not refund money you bet with a bookmaker.',
+  'home.faq_q3': 'How is VIP different?',
+  'home.faq_a3': 'VIP is a tipster subscription for a set number of days. Losing VIP picks are not refunded like marketplace picks. The plan fee is returned only if zero VIP picks were posted in your period.',
+  'home.faq_q4': 'Does BetRollover give booking codes?',
+  'home.faq_a4': 'No. BetRollover sells football predictions only. We do not share booking codes and we do not place bets for you.',
+  'home.ad_placeholder': 'Sponsored space',
+
   'home.seo_notice':
     '18+ only. Predictions are for information. BetRollover is not a bookmaker. Use tips responsibly.',
   'home.app_today_title': 'Today',
@@ -191,8 +210,8 @@ const en = {
   'home.today_matches_title': 'Today\'s headline matches',
   'home.today_matches_sub': 'Kickoff times and live scores from our platform catalog',
   'home.today_matches_see_all': 'All live scores',
-  'home.today_matches_browse': 'Match predictions',
-  'home.today_matches_prediction_link': '{home} vs {away} prediction',
+  'home.today_matches_browse': 'View match prediction',
+  'home.today_matches_prediction_link': 'View {home} vs {away} prediction',
   'home.today_matches_picks': '{count} picks',
   'home.today_matches_details': 'Match page',
   'home.today_matches_player_watch': 'Player to watch',
@@ -217,24 +236,24 @@ const en = {
   'match.picks_count': '{count} picks',
   'match.no_picks_yet': 'No marketplace picks for this fixture yet — browse all football picks or check back closer to kickoff.',
   'home.featured_tipsters': 'Top Performing Tipsters',
-  'home.featured_tipsters_sub': 'Same order as the leaderboard. Recent form plus profit per GHS 100 bet, among tipsters who posted in the last {days} days.',
-  'home.free_tip': 'Free Tip of the Day',
-  'home.free_tip_sub': 'Live free picks from tipsters with a high hit rate and positive profit per GHS 100 bet',
+  'home.featured_tipsters_sub': 'Ranked like the leaderboard: tipsters who posted in the last {days} days, ordered by recent form first, then profit per GHS 100 bet (positive profit lists above losses). Enough finished picks are required before a tipster leads the board.',
+  'home.free_tip': 'Free tips today',
+  'home.free_tip_sub': 'Live free picks from tipsters with a high win rate and positive profit per GHS 100 bet',
   'home.free_tip_browse_all': 'All picks →',
   'home.free_tip_badge_free': 'Free',
   'home.marketplace_active_badge': 'Marketplace',
   'home.marketplace_active_title': 'Latest from top tipsters',
   'home.marketplace_active_sub':
-    'Live picks from tipsters on the all-time leaderboard with a primary sample and positive profit per GHS 100 bet.',
+    'Live picks from tipsters on the all-time leaderboard with enough finished picks and positive profit per GHS 100 bet.',
   'home.marketplace_active_cta': 'Browse all tipsters',
   'home.marketplace_login_to_browse': 'Log in to see live marketplace picks.',
   'home.how_it_works': 'How It Works',
   'home.for_buyers': 'For buyers',
-  'home.for_sellers': 'For sellers',
+  'home.for_sellers': 'Sell predictions',
   'home.how_it_works_sub': 'Start in Three Simple Steps',
   'home.escrow_note': 'Pay only for the marketplace picks you want. Paid marketplace picks use purchase protection. VIP plans have their own refund rule.',
   'home.step1_title': 'Create an account and add money to your wallet',
-  'home.step1_desc': 'Register for free, then add funds with the payment methods shown in your wallet. You buy predictions here — you do not place bets on BetRollover.',
+  'home.step1_desc': 'Register for free, then add funds with the payment methods available in your wallet when they are live. You buy predictions here — you do not place bets on BetRollover.',
   'home.step2_title': 'Browse and buy a prediction',
   'home.step2_desc': 'Compare tipsters by win rate and profit per GHS 100 bet, then buy a pick or open a free one. The tipster is not paid until every selection has a result confirmed. If a paid marketplace pick loses, the tip price returns to your wallet.',
   'home.step3_title': 'Result confirmed — payout or refund',
@@ -394,7 +413,7 @@ const en = {
 
   // ── Home — Platform Features section ────────────────────────────────────
   'home.features_badge': 'Why BetRollover',
-  'home.features_title': 'A Tipster Marketplace Built on Trust',
+  'home.features_title': 'Sell your football predictions on BetRollover',
   'home.features_sub': 'Every feature exists to protect your purchase, surface verified tipsters, and give you full transparency before you pay.',
   'home.feature_escrow_title': 'Purchase Protection',
   'home.feature_escrow_desc': 'When you purchase a pick, the tipster is not paid until every selection settles. If the pick loses, the amount you paid is automatically refunded to your wallet. No claims, no disputes, no waiting.',
@@ -414,12 +433,12 @@ const en = {
   'home.feature_leaderboard_title': 'Leaderboard & Rankings',
   'home.feature_leaderboard_desc': 'Tipsters earn rank from verified results and recent posting — not self-reported stats. Inactive accounts drop off the all-time board.',
   'home.feature_community_title': 'Community Chat',
-  'home.stats_tipsters': 'Active Tipsters',
+  'home.stats_tipsters': 'Open tipsters',
   'home.stats_picks': 'Total Settled',
   'home.stats_marketplace_purchases': 'Marketplace Purchases',
   'home.stats_marketplace': 'Live on Marketplace',
   'home.stats_purchases': 'Purchases',
-  'home.stats_paid_out': 'Net Paid to Tipsters',
+  'home.stats_paid_out': 'Total paid to tipsters',
   'home.stats_marketplace_win_rate': 'Marketplace Win Rate',
   'home.stats_hint_tipsters': 'Active tipster profiles (tipsters.is_active). Includes humans and Acca Desk. Classic 1-fixture AI is hidden from public totals.',
   'home.stats_hint_settled_picks': 'Marketplace picks with a final result (won + lost), same as the archive “Total result confirmed” (all time).',
@@ -564,7 +583,7 @@ const en = {
   'guides.eval_risk_body': 'Diversify instead of concentrating spend on one profile. Purchase protection covers the pick price, but smart buyer behavior still matters for long-term outcomes.',
   'guides.stats_short': 'Read profit per GHS 100 bet & win rate',
   'guides.stats_card_title': 'How to read profit per GHS 100 bet, win rate, and streak',
-  'guides.stats_card_summary': 'What each number on a tipster profile means, and why a short streak is not the same as a result-confirmed record.',
+  'guides.stats_card_summary': 'What each number on a tipster profile means, and why a short streak is not the same as a record of finished picks.',
   'guides.stats_meta_title': 'How to Read Tipster Profit per GHS 100 Bet and Win Rate',
   'guides.stats_meta_desc': 'Profit per GHS 100 bet, win rate, and streak on BetRollover are calculated from result-confirmed picks only. Here is how to read them before you buy.',
   'guides.stats_label': 'Stats',
@@ -587,7 +606,7 @@ const en = {
   'guides.stats_faq_a2': 'No. Win rate ignores the prices. Compare it with profit per GHS 100 bet and with how many picks have actually result-confirmed.',
   'guides.stats_faq_q3': 'Where should I start if the record is short?',
   'guides.stats_faq_a3': 'Treat a short record as unproven. You can still read the result-confirmed archive, and paid picks remain covered by purchase protection if they lose.',
-  'guides.acca_short': 'Multi-match settlement',
+  'guides.acca_short': 'Accumulator settlement',
   'guides.acca_card_title': 'How multi-match picks have a result confirmed',
   'guides.acca_card_summary': 'When a multi-selection pick wins, what a cancelled leg does, and when a paid accumulator is refunded.',
   'guides.acca_meta_title': 'How Multi-match Picks Settle',
@@ -618,7 +637,7 @@ const en = {
   'guides.free_meta_desc': 'Free picks on BetRollover cost nothing and still settle into the public record. Paid picks require {minRoi}% result-confirmed profit per GHS 100 bet and {minWr}% win rate, and are refunded if they lose.',
   'guides.free_label': 'Pricing',
   'guides.free_title': 'Free picks and paid picks',
-  'guides.free_tagline': 'A free listing is a result-confirmed record you can read before you pay.',
+  'guides.free_tagline': 'A free listing is a record of finished picks you can read before you pay.',
   'guides.free_intro': 'Every registered account can publish picks. A free pick has no price. A paid pick charges the listed price and stays waiting for result until it settles. Both kinds use the same settlement: each selection is won, lost, or cancelled from official results.',
   'guides.free_free_h': 'What a free pick is',
   'guides.free_free_body': 'A free pick is listed at price 0. Unlocking it does not charge your wallet, so there is nothing to refund if it loses. Tipsters use free picks to build a public record before they are allowed to charge.',
@@ -677,12 +696,12 @@ const en = {
   'acca.landing_disclaimer_kicker': 'Educational & informational · 18+',
   'acca.landing_disclaimer':
     'Risk levels are odd bands for building sample multi-match picks — not sure bets. Sign in to generate and optionally publish a free marketplace pick. Gamble responsibly.',
-  'acca.disabled_title': 'Acca Generator is paused',
+  'acca.disabled_title': 'Accumulator Builder is paused',
   'acca.disabled_body':
     'This tool is temporarily off. Browse marketplace multi-match picks and rollover tickets in the meantime.',
-  'acca.disabled_admin': 'Acca Generator is disabled for users. As an admin you can still generate and publish.',
-  'acca.disabled_users': 'Acca Generator is currently disabled.',
-  'acca.loading': 'Loading Acca Generator…',
+  'acca.disabled_admin': 'Accumulator Builder is disabled for users. As an admin you can still generate and publish.',
+  'acca.disabled_users': 'Accumulator Builder is currently disabled.',
+  'acca.loading': 'Loading Accumulator Builder…',
   'acca.same_day_note':
     'Same day only — today’s remaining kickoffs. Odds are live from our synced database (not a fresh bookmaker pull on each click).',
   'acca.disclaimer_aria': 'Responsible betting disclaimer',
@@ -740,8 +759,8 @@ const en = {
   'acca.publish_success_id':
     'Free pick published (#{id}). It stays on the marketplace until any leg kicks off — open marketplace soon to confirm.',
   'acca.publish_description':
-    'Generated with Acca Generator (free pick). Educational/informational only — not a sure bet. Gamble responsibly. 18+.',
-  'acca.load_failed': 'Failed to load Acca Generator',
+    'Generated with Accumulator Builder (free pick). Educational/informational only — not a sure bet. Gamble responsibly. 18+.',
+  'acca.load_failed': 'Failed to load Accumulator Builder',
   'acca.config_failed': 'Failed to load config',
   'acca.availability_failed': 'Failed to check market availability',
   'acca.generate_failed': 'Generation failed',
@@ -797,7 +816,7 @@ const en = {
   'marketplace.picks_count': '{count} picks available',
   'marketplace.purchased_count': '{count} purchased',
   'marketplace.purchase_btn': 'Purchase for {price}',
-  'marketplace.view_details': 'View Details',
+  'marketplace.view_details': 'View prediction',
   'marketplace.free_badge': 'FREE',
   'marketplace.escrow_note': 'Purchase protection — refunded if the pick loses',
   'marketplace.sport_hub_title': '{sport} picks',
@@ -1057,7 +1076,7 @@ const en = {
   'pick_card.badge_free_unlocks_hint': 'Users who unlocked this free pick (saved to their account)',
   'pick_card.created': 'Created',
   'pick_card.picks_odds': '{n} picks • {odds} odds',
-  'pick_card.view_details': 'View Details',
+  'pick_card.view_details': 'View prediction',
   'pick_card.purchase': 'Purchase',
   'pick_card.processing': 'Processing...',
   'pick_card.purchase_to_view': 'Purchase to view details',
@@ -1087,7 +1106,7 @@ const en = {
   'pick_card.picks_count': '{n} picks',
   'pick_card.win_rate': '{rate}% win rate',
   'pick_card.roi_label': '{roi}% profit per GHS 100 bet',
-  'pick_card.roi_short': '{roi}% profit / GHS 100',
+  'pick_card.roi_short': 'GHS {roi} profit per GHS 100 bet',
   'pick_card.pick_unlocked': 'Pick Unlocked!',
   'pick_card.pick_unlocked_msg': 'Your pick has been unlocked!',
   'pick_card.confirm_purchase_title': 'Confirm purchase',
@@ -1265,7 +1284,7 @@ const en = {
   'tipster.verified': 'Verified Tipster',
   'tipster.win_rate': 'Win Rate',
   'tipster.total_picks': 'Total Picks',
-  'tipster.roi': 'Profit / GHS 100',
+  'tipster.roi': 'Profit per GHS 100',
   'tipster.followers': 'Followers',
   'tipster.follow': 'Follow',
   'tipster.unfollow': 'Unfollow',
@@ -1278,7 +1297,7 @@ const en = {
   'tipster.compare_remove': 'Remove from compare',
   'tipster.compare_add': 'Compare',
   'tipster.compare_selected': 'In compare',
-  'tipster.win_rate_short': 'WR',
+  'tipster.win_rate_short': 'Win rate',
   'tipster.total_picks_short': 'Picks',
   'tipster.settled_short': 'Result confirmed',
   'tipster.rating_histogram': 'Rating distribution',
@@ -1372,7 +1391,7 @@ const en = {
   'subscriptions.vip_already_subscribed_hint':
     'You already have an active VIP plan with this tipster. Manage it from your subscriptions page.',
   'subscriptions.marketplace_footnote':
-    'Match Winner Tips VIP posts one pick most days to private Telegram. Independent tipsters post up to 2 in-app VIP picks per plan period and need at least {minRoi}% result-confirmed profit per GHS 100 bet and {minWr}% result-confirmed win rate to offer a plan. Losing VIP picks are not refunded. Full refund only if zero VIP picks are published on the plan during the period. Paid marketplace picks still refund if that pick loses, and are not included in VIP. The public 7-day Rollover board is free when signed in.',
+    'Match Winner Tips VIP posts one pick most days to private Telegram. Independent tipsters post up to 2 in-app VIP picks per plan period and need at least {minRoi}% result-confirmed profit per GHS 100 bet and {minWr}% result-confirmed win rate to offer a plan. Losing VIP picks are not refunded. Full refund only if zero VIP picks are published on the plan during the period. Paid marketplace picks still refund if that pick loses, and are not included in VIP. The public 7-Day BetRollover board is free when signed in.',
   'subscriptions.trust_callout_title': 'VIP plan purchase protection',
   'subscriptions.trust_callout_body':
     'The plan fee stays waiting for result until period-end payout. This is not pick purchase protection: losing VIP picks are not refunded. Full refund only if zero VIP picks are published on this plan during your period. If at least one is published, the tipster is paid 70% and the platform keeps 30% at period end — even if those picks lose. Paid marketplace picks from the same tipster are not included.',
@@ -1600,7 +1619,7 @@ const en = {
   'support.admin_reply': 'Admin\'s reply',
   'support.help_centre': 'Help Centre',
   'support.raise_prompt': 'Raise a ticket and we\'ll get back to you promptly.',
-  'support.contact_facts_h': 'Support and dispute contact (plain text)',
+  'support.contact_facts_h': 'Support and dispute contact',
   'support.contact_facts_body':
     'Email: support@betrollover.com. Web: /support (signed-in tickets) and /contact. Use category “dispute” or “settlement” and include your pick id / purchase id when asking about a refund. Typical replies within 24 hours Mon–Fri; wallet and payment disputes within 48 hours. BetRollover is operated by OceanCyber. We are not a bookmaker — bookmaker account issues stay with SportyBet, Bet9ja, or your bookie.',
   'support.contact_email_label': 'Support email',
@@ -1981,21 +2000,21 @@ const en = {
     'verified football tipsters|tipster profit per GHS 100 bet win rate|VIP football tipster|football tipster directory Africa|public tipster track record',
   'seo.leaderboard_keywords':
     'football tipster leaderboard|tipster form ranking|football tipster profit per GHS 100 bet|verified tipsters ranking',
-  'seo.acca_title': 'Acca Generator — Football Multi-match Tips',
+  'seo.acca_title': 'Accumulator Builder — Football Multi-match Tips',
   'seo.acca_desc':
     'Build same-day football accumulator tips from synced odds. Sign in free, choose Lowest, Low, Medium, or High odds bands, generate a pick, and publish a marketplace pick. Educational tool — 18+.',
   'seo.acca_keywords':
     'football accumulator tips|acca generator|football accumulator builder|same day acca|educational accumulator tips|football tips Ghana',
-  'seo.acca_faq_1_q': 'What is the BetRollover Acca Generator?',
+  'seo.acca_faq_1_q': 'What is the BetRollover Accumulator Builder?',
   'seo.acca_faq_1_a':
     'It is a free same-day football accumulator builder for signed-in users. It picks legs from synced odds within Lowest, Low, Medium, or High odds bands. You can generate a sample pick and optionally publish it as a marketplace pick.',
-  'seo.acca_faq_2_q': 'Do I need VIP to use Acca Generator?',
+  'seo.acca_faq_2_q': 'Do I need VIP to use Accumulator Builder?',
   'seo.acca_faq_2_a':
     'No. Sign in with a free account to generate and publish. A daily generation limit still applies. VIP subscriptions are separate tipster plans.',
-  'seo.acca_faq_3_q': 'Are Acca Generator picks guaranteed tips?',
+  'seo.acca_faq_3_q': 'Are Accumulator Builder picks guaranteed tips?',
   'seo.acca_faq_3_a':
     'No. Risk levels are odd bands only. Outputs are educational and informational — not sure bets. Gamble responsibly. 18+ only.',
-  'seo.rollover_title': 'Free Football Tips — 7-Day Two-Fold Rollover',
+  'seo.rollover_title': 'Free Football Tips — 7-Day BetRollover',
   'seo.rollover_desc':
     'Sign in free to see live two-fold rollover tips. Settled history is public so you can judge form first. Win Day 1, roll through Day 7, then the example restarts. Not a bookmaker payout. 18+.',
   'seo.rollover_keywords':
@@ -2017,7 +2036,7 @@ const en = {
   'leaderboard.empty_logged_sub':
     'No tipsters match this filter right now. Try another period or sport, or browse all profiles.',
   'leaderboard.empty_logged_cta': 'Browse all tipsters',
-  'leaderboard.form_col': 'Form',
+  'leaderboard.form_col': 'Recent form',
   'leaderboard.form_hint': 'Activity score: win rate, capped positive profit per GHS 100 bet, and marketplace posting days in the last {days} days (max {cap} days count). Rank uses this plus signed profit per GHS 100 bet.',
   'leaderboard.important_note_title': 'Important note',
   'leaderboard.rank_notice_all_time':
@@ -2078,7 +2097,7 @@ const en = {
 
   'seo.register_title': 'Sign up',
   'seo.register_desc':
-    'Join BetRollover — football predictions, purchase-protected picks, and multi-currency wallets. Ghana-based for Africa and a global match audience.',
+    'Join BetRollover — football predictions, purchase-protected picks, and multi-currency wallets. Ghana-based for football fans across Africa.',
   'seo.register_og_alt': 'BetRollover — football predictions & purchase-protected picks',
   'seo.login_title': 'Sign In',
   'seo.login_desc':
@@ -2086,7 +2105,7 @@ const en = {
 
   // ── About page ───────────────────────────────────────────────────────────
   'about.headline': 'Ghana-based Football Predictions Marketplace',
-  'about.intro': 'BetRollover connects football analysts with a global match audience — especially across Africa — who want data-backed, purchase-protected picks.',
+  'about.intro': 'BetRollover connects football analysts with football fans across Africa who want data-backed, purchase-protected picks.',
   'about.who_h': 'Who runs BetRollover',
   'about.who_body':
     'BetRollover is operated by OceanCyber. The product company name you see on the site is BetRollover. We are based in Ghana. Contact: support@betrollover.com. Users buy football predictions from tipsters. Users do not place bets or stake money on this platform. We are not a bookmaker.',
@@ -2590,7 +2609,7 @@ const en = {
   'discover.no_items': 'No items yet.',
 
   'rollover.label': 'Free · 7-day board',
-  'rollover.title': '7-Day Rollover',
+  'rollover.title': '7-Day BetRollover',
   'rollover.tagline': 'Win a day, climb to the next. Free after sign-in. Educational — not a payout.',
   'rollover.today': "Today's pick",
   'rollover.plan_title': '7-day board',
@@ -2629,7 +2648,7 @@ const en = {
   'buy.nav': 'VIP & paid tips',
   'buy.meta_title': 'Buy Football Predictions & VIP Tipster Plans',
   'buy.meta_desc':
-    'Buy a single football prediction or subscribe to a VIP tipster plan in GHS. Paid marketplace picks refund if they lose. Plans listed in plain text. Not a bookmaker. 18+.',
+    'Buy a single football prediction or subscribe to a VIP tipster plan in GHS. Paid marketplace picks refund if they lose. Plans show name, price, length and refund rule. Not a bookmaker. 18+.',
   'buy.label': 'Buy predictions',
   'buy.title': 'Buy a football prediction or VIP plan',
   'buy.tagline': 'Pay for one tip or a VIP plan. Result-confirmed results stay public so you can judge form before you subscribe.',
@@ -2638,7 +2657,7 @@ const en = {
   'buy.picks_h': 'Buy a single football prediction',
   'buy.picks_body':
     'Open the marketplace, compare tipster win rate and result-confirmed history, then buy with your wallet. A paid marketplace pick that loses is refunded to your wallet automatically. Free predictions do not need a purchase.',
-  'buy.vip_h': 'VIP tipster plans (plain text)',
+  'buy.vip_h': 'VIP tipster plans',
   'buy.vip_body':
     'Each plan below shows the tipster name, plan name, price in GHS, length in days, what is included, and the refund rule. Automated tipsters are labelled. Losing VIP picks are not refunded like marketplace picks. The plan fee is returned only if zero VIP picks are published during your period.',
   'buy.vip_empty': 'No VIP plans are listed right now. Check the VIP marketplace later or buy a single prediction.',

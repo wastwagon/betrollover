@@ -20,6 +20,7 @@ import { HomeMarketingCollapse } from '@/components/HomeMarketingCollapse';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
+import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
 import { fetchHomePublicData } from '@/lib/home-public-data';
@@ -65,9 +66,16 @@ async function HomeBelowFold() {
     fetchHomePublicData({ revalidate: 30 }),
   ]);
   const sellVars = { minRoi: String(th.minimumROI), minWr: String(th.minimumWinRate) };
+  const homeFaqs = [
+    { question: t('home.faq_q1'), answer: t('home.faq_a1') },
+    { question: t('home.faq_q2'), answer: t('home.faq_a2') },
+    { question: t('home.faq_q3'), answer: t('home.faq_a3') },
+    { question: t('home.faq_q4'), answer: t('home.faq_a4') },
+  ];
 
   return (
     <>
+        <FaqJsonLd faqs={homeFaqs} />
         <HomeHero
           initialStats={homeData.stats}
           initialTodayMatches={homeData.todayMatches}
@@ -158,6 +166,55 @@ async function HomeBelowFold() {
               </Link>
               <Link href="/buy-football-tips" className="text-sm font-semibold text-[var(--primary)] hover:underline">
                 {t('buy.nav')}
+              </Link>
+            </nav>
+          </div>
+        </section>
+
+        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-faq">
+          <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+            <h2 id="home-faq" className="font-display text-lg sm:text-xl font-semibold text-[var(--text)] mb-4">
+              {t('home.faq_title')}
+            </h2>
+            <dl className="space-y-4 max-w-3xl">
+              {homeFaqs.map((faq) => (
+                <div key={faq.question} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5">
+                  <dt className="font-semibold text-[var(--text)] text-sm sm:text-base">{faq.question}</dt>
+                  <dd className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">{faq.answer}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-sellers-cta">
+          <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 id="home-sellers-cta" className="font-display text-lg sm:text-xl font-semibold text-[var(--text)]">
+              {t('home.sellers_cta_title')}
+            </h2>
+            <Link
+              href="/register"
+              className={buttonClassName({ size: 'md', className: 'w-full sm:w-auto shrink-0' })}
+            >
+              {t('home.sellers_cta_btn')}
+            </Link>
+          </div>
+        </section>
+
+        <section className="border-t border-[var(--border)] w-full min-w-0" aria-labelledby="home-news-block">
+          <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <h2 id="home-news-block" className="font-display text-base sm:text-lg font-semibold text-[var(--text)] mb-3">
+              {t('home.news_block_title')}
+            </h2>
+            <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label={t('home.news_block_title')}>
+              <Link href="/news" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('nav.news')}
+              </Link>
+              <Link href="/guides" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('home.seo_link_guides')}
+              </Link>
+              <Link href="/guides/purchase-protection" className="text-sm font-semibold text-[var(--primary)] hover:underline">
+                {t('guides.escrow_short')}
               </Link>
             </nav>
           </div>

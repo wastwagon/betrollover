@@ -29,6 +29,9 @@ interface Tipster {
   avatarUrl?: string | null;
   tipsterType?: string | null;
   tipster_type?: string | null;
+  isAi?: boolean;
+  is_ai?: boolean;
+  roi?: number;
 }
 
 interface MarketplaceCardItem {

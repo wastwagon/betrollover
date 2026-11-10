@@ -7,6 +7,7 @@ import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { FollowersCountButton } from '@/components/TipsterFollowersModal';
 import { VerifiedTipsterBadge } from '@/components/VerifiedTipsterBadge';
+import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { TipsterTrustStrip } from '@/components/TipsterTrustStrip';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
 import { TIPSTER_ACTIVE_WITHIN_DAYS, TIPSTER_FORM_POST_CAP } from '@betrollover/shared-types';
@@ -69,7 +70,9 @@ export function TipsterCard({
   const showAvatar = tipster.avatar_url && !avatarError;
   const settledCount = (tipster.total_wins ?? 0) + (tipster.total_losses ?? 0);
   const hasSettledPicks = settledCount > 0;
-  const roiDisplay = hasSettledPicks ? `${Number(tipster.roi).toFixed(1)}%` : '—';
+  const roiDisplay = hasSettledPicks
+    ? t('pick_card.roi_short', { roi: Number(tipster.roi).toFixed(2) })
+    : '—';
   const winRateDisplay = hasSettledPicks ? `${Number(tipster.win_rate).toFixed(0)}%` : '—';
   const roiPositive = tipster.roi > 0;
   const roiNegative = tipster.roi < 0;
@@ -120,6 +123,7 @@ export function TipsterCard({
                 >
                   {tipster.display_name}
                 </h3>
+                {tipster.is_ai ? <AiTipsterBadge className="shrink-0" /> : null}
                 {!premium && !tipster.is_ai && tipster.is_verified ? (
                   <VerifiedTipsterBadge />
                 ) : null}

@@ -4,7 +4,7 @@ Last updated: 2026-11-10
 
 ## One sentence
 
-BetRollover is a Ghana-based football tipster marketplace where buyers compare public tipster records, buy purchase-protected picks, and use free signed-in tools such as the 7-day Rollover board — it is not a bookmaker.
+BetRollover is a Ghana-based football tipster marketplace where buyers compare public tipster records, buy purchase-protected picks, and use free signed-in tools such as the 7-Day BetRollover board — it is not a bookmaker.
 
 ## What the product is
 
@@ -24,10 +24,10 @@ BetRollover is a Ghana-based football tipster marketplace where buyers compare p
 ## VIP vs free Rollover
 
 - **VIP (Match Winner Tips / account `@AccaSure1X2`):** paid subscription; unlocks VIP picks and private VIP Telegram while active. Plan fee is returned only if zero VIP picks are posted during the period. Losing VIP picks are not refunded like marketplace picks. Public label prefers “Match Winner Tips” — not “sure win”.
-- **7-Day Rollover board:** public educational ladder using platform two-match picks. Live tips on that board are **free for signed-in users**. Settled tips are public. VIP remains a separate paid product.
+- **7-Day BetRollover board:** public educational ladder using platform two-match picks. Live tips on that board are **free for signed-in users**. Settled tips are public. VIP remains a separate paid product.
 - Independent tipsters may also offer their own VIP plans when they meet platform ROI / win-rate thresholds.
 
-## Acca Generator
+## Accumulator Builder
 
 - Free for signed-in users.
 - Builds same-day sample multi-match picks in odd bands (learning price ranges — not a guarantee of results).

@@ -9,7 +9,6 @@ import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 import { isDiscoverySportAllowed } from '@/lib/football-only-discovery';
 import {
-  FREE_TIP_OF_THE_DAY_LIMIT,
   freeTipOfTheDayQuery,
   parseFreeTipItems,
 } from '@/lib/free-tip-of-the-day';
@@ -53,8 +52,11 @@ interface FreeTip {
   commentCount?: number;
 }
 
+/** Home free shelf shows one tip; keep other shelves from repeating the same free picks. */
+const HOME_FREE_TIP_LIMIT = 1;
+
 function visibleFreeTips(items: FreeTip[]): FreeTip[] {
-  return items.filter((item) => isDiscoverySportAllowed(item.sport)).slice(0, FREE_TIP_OF_THE_DAY_LIMIT);
+  return items.filter((item) => isDiscoverySportAllowed(item.sport)).slice(0, HOME_FREE_TIP_LIMIT);
 }
 
 export function HomeFreeTipOfTheDay({
@@ -88,10 +90,8 @@ export function HomeFreeTipOfTheDay({
       <section className="py-12 md:py-16 border-t border-[var(--border)] bg-[var(--bg)] w-full min-w-0 max-w-full overflow-x-hidden">
         <div className="section-ux-gutter-wide w-full min-w-0">
           <h2 className="text-base font-semibold text-[var(--text)] mb-4 sm:mb-6 sm:text-lg md:text-xl">{t('home.free_tip')}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--border)]" />
-            ))}
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 min-w-0 max-w-md">
+            <div className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--border)]" />
           </div>
         </div>
       </section>
@@ -118,7 +118,7 @@ export function HomeFreeTipOfTheDay({
             {t('home.free_tip_browse_all')}
           </Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 min-w-0 max-w-md">
           {tips.map((item) => (
             <PickCard
               key={item.id}

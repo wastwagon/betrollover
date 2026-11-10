@@ -160,7 +160,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
         heading: 'Finding today’s picks',
         paragraphs: [
           'Start on the marketplace and use the day filter for today when you want kickoffs on the current calendar date. Home and live-scores surfaces also highlight matches with related picks. Each public match page lists predictions linked to that fixture so you are not hunting only by tipster name.',
-          'VIP plans deliver a stream of VIP picks over a paid period rather than a single tip. Marketplace singles and multi-match picks remain purchase-protected per pick. Read the buy page for plan length, price in GHS, and the VIP refund rule in plain text.',
+          'VIP plans deliver a stream of VIP picks over a paid period rather than a single tip. Marketplace singles and multi-match picks remain purchase-protected per pick. Read the buy page for plan length, price in GHS, and the VIP refund rule.',
         ],
         links: [
           { href: '/marketplace', label: 'Marketplace' },
@@ -250,7 +250,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         heading: 'How tipsters list both teams to score',
         paragraphs: [
-          'A pick may be a single both-teams-to-score yes/no line, or a multi that includes those legs with match results or totals. Read every leg before you buy. Multi-match settlement fails if any non-cancelled leg loses — the purchase-protection guide explains refunds for those cases.',
+          'A pick may be a single both-teams-to-score yes/no line, or a multi that includes those legs with match results or totals. Read every leg before you buy. Accumulator settlement fails if any non-cancelled leg loses — the purchase-protection guide explains refunds for those cases.',
           'Titles on modern listings prefer readable match-based names instead of opaque ids. Open the pick page for full selections once revealed. Related picks on a match page help you see whether several tipsters agree on both teams to score for the same fixture.',
         ],
         links: [
@@ -341,7 +341,7 @@ export const PHASE3_HUBS: Record<Phase3HubKey, Phase3HubContent> = {
       {
         heading: 'Reading an over 2.5 tip',
         paragraphs: [
-          'Confirm the exact market line on the pick. Some picks mix over 2.5 with team totals or first-half goals. Odds and leg count are shown on cards before purchase. After unlock, selections appear in plain text — not only inside images — so you can read them carefully.',
+          'Confirm the exact market line on the pick. Some picks mix over 2.5 with team totals or first-half goals. Odds and leg count are shown on cards before purchase. After unlock, selections appear — not only inside images — so you can read them carefully.',
           'Settlement uses official full-time totals for the selected market. Cancelled-leg rules follow the platform multi-match settlement guide. Tips waiting for a result do not count toward profit per GHS 100 bet until they settle.',
         ],
         links: [

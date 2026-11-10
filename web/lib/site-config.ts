@@ -72,7 +72,7 @@ export const PLAY_STORE_URL =
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL?.trim() || '';
 
 const SITE_DESCRIPTION_FOOTBALL =
-  'Ghana tipster marketplace for football. Paid marketplace picks refund to your wallet if they lose. VIP plans have a separate refund rule. Free 7-day Rollover when signed in. Not a bookmaker. 18+.';
+  'Ghana tipster marketplace for football. Paid marketplace picks refund to your wallet if they lose. VIP plans have a separate refund rule. Free 7-Day BetRollover when signed in. Not a bookmaker. 18+.';
 
 const SITE_DESCRIPTION_MULTISPORT =
   'Ghana tipster marketplace. Paid marketplace picks refund if they lose; VIP plans have a separate refund rule. Football first, more sports when available. Free signed-in tools plus VIP. Not a bookmaker. 18+.';

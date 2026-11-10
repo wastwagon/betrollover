@@ -27,7 +27,7 @@ const CurrencyContext = createContext<CurrencyContextValue>({
   currencies: CURRENCIES,
   setCurrencyCode: () => {},
   rates: FALLBACK_RATES,
-  format: (ghs) => ({ primary: `₵${(Number(ghs) || 0).toFixed(2)}` }),
+  format: (ghs) => ({ primary: `GHS ${(Number(ghs) || 0).toFixed(2)}` }),
   loading: false,
 });
 

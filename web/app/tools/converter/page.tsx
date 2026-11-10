@@ -56,10 +56,10 @@ export default function ConverterPage() {
         {/* Input */}
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-6 mb-6 shadow-sm">
           <label className="block text-sm font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
-            Amount in GHS (₵)
+            Amount in GHS
           </label>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
-            <span className="text-3xl font-bold text-[var(--primary)] flex-shrink-0">₵</span>
+            <span className="text-3xl font-bold text-[var(--primary)] flex-shrink-0">GHS</span>
             <input
               type="number"
               min="0"

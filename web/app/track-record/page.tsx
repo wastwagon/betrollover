@@ -49,9 +49,9 @@ export default async function TrackRecordPage() {
 
   const refundsGhs =
     stats && stats.purchaseProtectionRefundsGhs > 0
-      ? `₵${formatInteger(stats.purchaseProtectionRefundsGhs, locale)}`
+      ? `GHS ${formatInteger(stats.purchaseProtectionRefundsGhs, locale)}`
       : stats
-        ? '₵0'
+        ? 'GHS 0'
         : '—';
 
   return (

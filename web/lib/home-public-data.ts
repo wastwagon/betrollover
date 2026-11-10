@@ -120,6 +120,25 @@ export async function fetchHomePublicData(options?: { revalidate?: number }): Pr
       freeTips = freeTips.filter((item) => isDiscoverySportAllowed(item.sport as string | undefined));
     }
 
+    // One free tip on the home free shelf; keep other shelves from repeating the same pick ids.
+    freeTips = freeTips.slice(0, 1);
+    const freeIds = new Set(
+      freeTips.map((item) => Number((item as { id?: number }).id)).filter((id) => Number.isFinite(id) && id > 0),
+    );
+    const featuredIds = new Set<number>();
+    featuredPicks = featuredPicks.filter((item: unknown) => {
+      const id = Number((item as { id?: number })?.id);
+      if (!Number.isFinite(id) || id <= 0) return true;
+      if (freeIds.has(id)) return false;
+      featuredIds.add(id);
+      return true;
+    });
+    marketplaceItems = marketplaceItems.filter((item: unknown) => {
+      const id = Number((item as { id?: number })?.id);
+      if (!Number.isFinite(id) || id <= 0) return true;
+      return !freeIds.has(id) && !featuredIds.has(id);
+    });
+
     return {
       stats: parseStats(statsJson),
       leadingRoi: leadingRoiFromLeaderboard(lbJson),

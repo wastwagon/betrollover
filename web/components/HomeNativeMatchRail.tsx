@@ -211,7 +211,12 @@ export function HomeNativeMatchRail({
                   href={`/matches/${m.id}`}
                   className="flex min-h-[34px] flex-1 items-center justify-center px-1 text-[11px] font-semibold text-[var(--primary)] active:bg-[var(--fill-secondary)] text-center"
                 >
-                  {picks > 0 ? t('home.today_matches_picks', { count: String(picks) }) : t('home.today_matches_browse')}
+                  {picks > 0
+                    ? t('home.today_matches_picks', { count: String(picks) })
+                    : t('home.today_matches_prediction_link', {
+                        home: m.homeTeamName,
+                        away: m.awayTeamName,
+                      })}
                 </Link>
               </div>
             </article>

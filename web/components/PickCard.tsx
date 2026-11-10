@@ -24,8 +24,10 @@ import { PickShareButtons } from '@/components/PickShareButtons';
 import { BottomSheet } from '@/components/ios/BottomSheet';
 import { PickSocialBar, type PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { Button, buttonClassName } from '@/components/ui/Button';
+import { AiTipsterBadge } from '@/components/AiTipsterBadge';
 import { accaDeskBoardBadge } from '@/lib/acca-desk-board-badge';
 import { resultChipClass } from '@/lib/result-chip';
+import { isAccaDeskTipsterType, isVipRosterUsername } from '@/lib/tipster-kind';
 
 interface Pick {
   id?: number;
@@ -60,6 +62,8 @@ interface Tipster {
   /** `acca_desk` vs classic `ai` — drives the Today/Tomorrow board chip, not an AI pill. */
   tipsterType?: string | null;
   tipster_type?: string | null;
+  isAi?: boolean;
+  is_ai?: boolean;
   winRate: number;
   roi?: number;
   totalPicks: number;
@@ -235,6 +239,28 @@ export function PickCard({
     })),
   );
 
+  const tipsterType = tipster?.tipsterType ?? tipster?.tipster_type;
+  const isAutomatedTipster = !!(
+    tipster?.isAi ||
+    tipster?.is_ai ||
+    isAccaDeskTipsterType(tipsterType) ||
+    isVipRosterUsername(tipster?.username)
+  );
+
+  const picksN = tipster?.totalPicks ?? totalPicks;
+  const picksCountLabel =
+    picksN === 1 ? t('pick_card.picks_abbrev_one') : t('pick_card.picks_abbrev', { n: String(picksN) });
+
+  const firstLeg = picks[0];
+  const viewHome = (firstLeg?.homeTeamName || '').trim();
+  const viewAway = (firstLeg?.awayTeamName || '').trim();
+  const viewPredictionLabel =
+    picks.length > 1
+      ? t('pick_card.view_multi')
+      : viewHome && viewAway
+        ? t('pick_card.view_match', { home: viewHome, away: viewAway })
+        : t('pick_card.view_details');
+
   const handlePurchase = () => {
     if (price > 0) {
       setShowPurchaseConfirm(true);
@@ -305,10 +331,11 @@ export function PickCard({
                     <p className="font-medium text-xs text-[var(--text)] truncate min-w-0" title={tipster ? `${t('pick_card.tipster')}: ${tipster.displayName}` : t('pick_card.tipster')}>
                       {tipster?.displayName || t('pick_card.tipster')}
                     </p>
+                    {isAutomatedTipster ? <AiTipsterBadge className="shrink-0 scale-90 origin-left" tipsterType={tipsterType} /> : null}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0 mt-0 min-w-0">
                     <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
-                      {tipster ? `${tipster.totalPicks}p` : `${totalPicks}p`}
+                      {picksCountLabel}
                     </span>
                     <span
                       className="text-[9px] font-bold text-[var(--success)] tabular-nums"
@@ -333,7 +360,7 @@ export function PickCard({
                         }`}
                         title={t('pick_card.roi_label', { roi: Number(tipster.roi).toFixed(1) })}
                       >
-                        {t('pick_card.roi_short', { roi: Number(tipster.roi).toFixed(1) })}
+                        {t('pick_card.roi_short', { roi: Number(tipster.roi).toFixed(2) })}
                       </span>
                     )}
                     {tipster &&
@@ -637,7 +664,7 @@ export function PickCard({
                 href={detailsHref ?? `/coupons/${id}`}
                 className={buttonClassName({ variant: 'primary', size: 'sm', fullWidth: true, className: 'text-xs' })}
               >
-                {t('pick_card.view_details')}
+                {viewPredictionLabel}
               </Link>
             ) : requiresSubscription ? (
               <Link
