@@ -14,6 +14,7 @@ import {
   GuideStack,
   GuideStep,
 } from '@/components/education/GuideChrome';
+import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -161,6 +162,10 @@ export default async function HowItWorksPage() {
 
             <div id="faq" className="scroll-mt-[calc(var(--br-chrome-below-header)+1rem)]">
               <GuideFaqList title={t('how_it_works.faq_title')} faqs={faqs} />
+            </div>
+
+            <div className="mt-6">
+              <GrowthDistributionStrip compact />
             </div>
 
             <GuidePanel>

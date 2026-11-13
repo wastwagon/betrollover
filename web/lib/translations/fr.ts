@@ -78,6 +78,9 @@ const fr: Record<string, string> = {
   'auth.login_cta': 'Connexion à votre compte',
   'auth.register_cta': 'Créez votre compte',
   'auth.register_subtitle': 'E-mail, Google ou Apple — vous pouvez utiliser le site tout de suite.',
+  'auth.register_telegram_hint':
+    'Rejoignez notre Telegram pour des pronostics gratuits, alertes et support.',
+  'auth.register_telegram_cta': 'Rejoignez-nous sur Telegram',
   'auth.referral_code': 'Code de parrainage (optionnel)',
   'auth.terms_agree': 'En vous inscrivant, vous acceptez nos',
   'auth.terms': 'Conditions d\'Utilisation',
@@ -826,11 +829,15 @@ const fr: Record<string, string> = {
     'Lorsque vous achetez un pronostic payant, les fonds restent en attente de règlement jusqu\'au règlement de toutes les sélections. Si le pronostic perd, le montant payé est remboursé automatiquement sur votre portefeuille.',
   'marketplace.login_to_buy': 'Connectez-vous pour acheter',
 
+  // ── Annonces (emplacement vide) ───────────────────────────────────────────
+  'ads.telegram_join': 'Rejoignez-nous sur Telegram',
+  'ads.telegram_sub': 'Pronostics gratuits et alertes picks',
+
   // ── Croissance / distribution ─────────────────────────────────────────────
-  'growth.strip_title': 'Alertes et preuve de remboursement',
+  'growth.strip_title': 'Rejoignez-nous sur Telegram',
   'growth.strip_sub':
-    'Suivez les alertes sur Telegram, ou lisez comment fonctionnent les remboursements automatiques.',
-  'growth.telegram_cta': 'Telegram @{handle}',
+    'Pronostics gratuits, alertes et support — suivez le canal pour ne rien manquer.',
+  'growth.telegram_cta': 'Rejoignez-nous sur Telegram (@{handle})',
   'growth.play_cta': 'Télécharger l\'appli',
   'growth.app_store_cta': 'Télécharger l\'appli',
   'growth.escrow_case_cta': 'Comment marchent les remboursements',
@@ -1792,7 +1799,7 @@ const fr: Record<string, string> = {
   'footer.track_record': 'Historique et remboursements',
   'footer.resources': 'Ressources',
   'footer.discover': 'Découvrir',
-  'footer.telegram_cta': 'Discuter sur Telegram',
+  'footer.telegram_cta': 'Rejoignez-nous sur Telegram',
 
   // ── Header (nav dropdowns, section labels, descriptions) ─────────────────
   'header.section_explore': 'Explorer',

@@ -5,6 +5,7 @@ import { AppFooter } from '@/components/AppFooter';
 import { DiscoverFamilyNav } from '@/components/DiscoverFamilyNav';
 import { EducationRelatedLinks } from '@/components/EducationRelatedLinks';
 import { GuidePanel, GuideStack, GuideStep } from '@/components/education/GuideChrome';
+import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { buttonClassName } from '@/components/ui/button-styles';
 import { SITE_NAME } from '@/lib/site-config';
 import { getLocale, buildT } from '@/lib/i18n';
@@ -137,6 +138,10 @@ export default async function LearnPage() {
                 <Link href="/discover">{t('nav.discover')}</Link>
                 {t('learn.market_footer_end')}
               </p>
+            </div>
+
+            <div className="mt-6">
+              <GrowthDistributionStrip compact />
             </div>
 
             <GuidePanel>

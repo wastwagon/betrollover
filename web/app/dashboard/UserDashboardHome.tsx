@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
+import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { PickCard } from '@/components/PickCard';
 import { PickQuotaBanner } from '@/components/PickQuotaBanner';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
@@ -109,6 +110,12 @@ export function UserDashboardHome({
             <div className="mb-6">
               <AdSlot zoneSlug="dashboard-full" fullWidth className="w-full max-w-3xl" />
             </div>
+
+            {surface === 'buy' ? (
+              <div className="mb-6 max-w-3xl">
+                <GrowthDistributionStrip compact />
+              </div>
+            ) : null}
 
             {surface === 'buy' ? (
             <Link

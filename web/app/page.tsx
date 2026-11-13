@@ -19,6 +19,7 @@ import { HomeMarketingCollapse } from '@/components/HomeMarketingCollapse';
 import { FeaturedPicks } from '@/components/FeaturedPicks';
 import { HomeFreeTipOfTheDay } from '@/components/HomeFreeTipOfTheDay';
 import { HomeQuickMarketplaceSections } from '@/components/HomeQuickMarketplaceSections';
+import { GrowthDistributionStrip } from '@/components/GrowthDistributionStrip';
 import { FaqJsonLd } from '@/components/FaqJsonLd';
 import { localizedUrl, seoAlternates } from '@/lib/site-config';
 import { fetchSellingThresholds } from '@/lib/selling-thresholds';
@@ -109,6 +110,10 @@ async function HomeBelowFold() {
           <HomeFreeTipOfTheDay initialFreeTips={homeData.freeTips} />
         </section>
         <HomeQuickMarketplaceSections initialMarketItems={homeData.marketplaceItems} initialLeaderboard={homeData.topTipsters} />
+
+        <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <GrowthDistributionStrip />
+        </div>
 
         <section className="border-t border-[var(--separator)] w-full min-w-0" aria-labelledby="home-seo-body">
           <div className="section-ux-cap-4xl w-full min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">

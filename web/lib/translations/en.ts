@@ -81,6 +81,8 @@ const en = {
   'auth.login_cta': 'Sign in to your account',
   'auth.register_cta': 'Create your account',
   'auth.register_subtitle': 'Use email, Google, or Apple — you can start using the site right away.',
+  'auth.register_telegram_hint': 'Join our Telegram for free tips, pick alerts, and support.',
+  'auth.register_telegram_cta': 'Join us on Telegram',
   'auth.referral_code': 'Referral code (optional)',
   'auth.terms_agree': 'By registering you agree to our',
   'auth.terms': 'Terms of Service',
@@ -835,10 +837,14 @@ const en = {
     'When you buy a paid pick, it stays waiting for result until every selection settles. If the pick loses, the purchase amount is refunded to your wallet automatically.',
   'marketplace.login_to_buy': 'Sign in to purchase',
 
+  // ── Ads (empty slot fallback) ───────────────────────────────────────────
+  'ads.telegram_join': 'Join us on Telegram',
+  'ads.telegram_sub': 'Free tips and pick alerts',
+
   // ── Growth / distribution ────────────────────────────────────────────────
-  'growth.strip_title': 'Tips, alerts & refund proof',
-  'growth.strip_sub': 'Follow pick alerts on Telegram, or read how refunds work.',
-  'growth.telegram_cta': 'Telegram @{handle}',
+  'growth.strip_title': 'Join us on Telegram',
+  'growth.strip_sub': 'Free tips, pick alerts, and support — follow the channel so you never miss a drop.',
+  'growth.telegram_cta': 'Join us on Telegram (@{handle})',
   'growth.play_cta': 'Get the app',
   'growth.app_store_cta': 'Get the app',
   'growth.escrow_case_cta': 'How refunds work',
@@ -1803,7 +1809,7 @@ const en = {
   'footer.track_record': 'Track record and refunds',
   'footer.resources': 'Resources',
   'footer.discover': 'Discover',
-  'footer.telegram_cta': 'Chat on Telegram',
+  'footer.telegram_cta': 'Join us on Telegram',
 
   // ── Header (nav dropdowns, section labels, descriptions) ─────────────────
   'header.section_explore': 'Explore',

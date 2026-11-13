@@ -352,12 +352,12 @@ export function TopBar() {
             href={TELEGRAM_ADS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden lg:inline text-[11px] font-medium tracking-wide text-white hover:text-white transition-colors whitespace-nowrap px-2 py-1"
+            className="text-[11px] font-medium tracking-wide text-white hover:text-white transition-colors whitespace-nowrap px-2 py-1"
             onClick={() => trackEvent('telegram_cta_clicked', { source: 'topbar' })}
           >
             {t('footer.telegram_cta')}
           </a>
-          <span className="hidden lg:inline-flex"><RailDivider /></span>
+          <RailDivider />
           <Link
             href={localizeHref('/responsible-gambling', pathname)}
             className="text-[10px] font-semibold tracking-wider text-white hover:text-white transition-colors px-2 py-1"
