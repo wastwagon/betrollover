@@ -10,7 +10,12 @@ import {
   formatVipPublicWinPost,
   telegramChannelSeoDescription,
 } from './telegram-copy';
-import { telegramKickoffLabel, type TelegramSlipLeg } from './telegram-slip';
+import {
+  formatTelegramLegLine,
+  telegramHeadlineWhenLegsListed,
+  telegramLegsHaveCopy,
+  type TelegramSlipLeg,
+} from './telegram-slip';
 import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
 
 export type TelegramPickPostInput = {
@@ -276,18 +281,17 @@ export class TelegramChannelService {
     const bookieKey = (input.bookmakerKey || '').trim();
     const bookie = bookieKey ? bookmakerLabelForKey(bookieKey) || bookieKey : '';
     const url = this.couponUrl(input.couponId, 'free');
+    const hasLegs = telegramLegsHaveCopy(input.legs);
 
-    const lines = [`${title} · free${odds ? ` · ${odds} odds` : ''}`];
+    // When legs list every fixture, skip the SEO title that repeats the same names.
+    const head = hasLegs
+      ? `${telegramHeadlineWhenLegsListed(title, 'Free pick')}${odds ? ` · Combined ${odds}` : ''}`
+      : `${title} · free${odds ? ` · ${odds} odds` : ''}`;
+    const lines = [head];
     if (tipster) lines.push(`Tipster: ${tipster}`);
     for (const leg of input.legs || []) {
-      const match = (leg.matchDescription || '').trim();
-      const pred = (leg.prediction || '').trim();
-      const lo =
-        leg.odds != null && Number.isFinite(Number(leg.odds)) ? ` @ ${Number(leg.odds).toFixed(2)}` : '';
-      const when = telegramKickoffLabel(leg.matchDate);
-      if (match || pred) {
-        lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred}${lo}${when ? ` · ${when}` : ''}`);
-      }
+      const line = formatTelegramLegLine(leg, 'open');
+      if (line) lines.push(line);
     }
     if (code) {
       lines.push(bookie ? `${bookie} code: ${code}` : `Booking code: ${code}`);
@@ -310,6 +314,7 @@ export class TelegramChannelService {
         : null;
     const url = this.couponUrl(input.couponId, 'paid');
 
+    // Paid teasers omit legs — keep the match title so the alert still names the fixtures.
     const head = `Paid pick 🔒 · ${title}${odds ? ` · ${odds} odds` : ''}${price ? ` · GHS ${price}` : ''}`;
     const lines = [head];
     if (tipster) lines.push(`Tipster: ${tipster}`);
@@ -328,15 +333,13 @@ export class TelegramChannelService {
     const tipster = (input.tipsterName || '').trim();
     const url = this.couponUrl(input.couponId, 'win');
     const priceBit = input.isFree ? 'free' : 'paid';
-    const lines = [`Won ✅ · ${title}${odds ? ` · ${odds}` : ''} · ${priceBit}`];
+    const hasLegs = telegramLegsHaveCopy(input.legs);
+    const label = hasLegs ? telegramHeadlineWhenLegsListed(title, 'Pick') : title;
+    const lines = [`Won ✅ · ${label}${odds ? ` · ${odds}` : ''} · ${priceBit}`];
     if (tipster) lines.push(`Tipster: ${tipster}`);
     for (const leg of input.legs || []) {
-      const match = (leg.matchDescription || '').trim();
-      const pred = (leg.prediction || '').trim();
-      const mark = (leg.result || 'won').toUpperCase();
-      const score =
-        leg.homeScore != null && leg.awayScore != null ? ` FT ${leg.homeScore}-${leg.awayScore}` : '';
-      if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred} · ${mark}${score}`);
+      const line = formatTelegramLegLine(leg, 'settled');
+      if (line) lines.push(line);
     }
     lines.push('Won together — share the W.');
     lines.push('');

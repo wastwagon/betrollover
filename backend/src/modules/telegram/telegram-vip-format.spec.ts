@@ -14,11 +14,29 @@ describe('VIP Telegram format', () => {
       couponUrl: 'https://betrollover.com/coupons/1',
     });
     expect(text).toContain('BETROLLOVER VIP');
+    expect(text).toContain('AccaSure1X2 · Home or Draw');
     expect(text).toContain('Combined 2.45');
     expect(text).toContain('Team A vs Team B');
     expect(text).toContain('ABC123');
     expect(text).toContain('https://betrollover.com/coupons/1');
     expect(text.toLowerCase()).toContain('18+');
+  });
+
+  it('does not repeat SEO fixture titles above the leg list', () => {
+    const text = formatVipCouponPost({
+      title: '2-match pick: Team A vs Team B + Team C vs Team D, 20 Nov 2026',
+      totalOdds: 1.57,
+      legs: [
+        { matchDescription: 'Team A vs Team B', prediction: 'Home win', odds: 1.29 },
+        { matchDescription: 'Team C vs Team D', prediction: 'Home win', odds: 1.22 },
+      ],
+      couponUrl: 'https://betrollover.com/coupons/9',
+    });
+    expect(text).toContain('BETROLLOVER VIP · Two-Fold');
+    expect(text).toContain('Combined 1.57');
+    expect(text).toContain('Team A vs Team B');
+    expect(text).not.toMatch(/2-match pick:/);
+    expect(text).not.toContain('Team A vs Team B + Team C vs Team D');
   });
 
   it('parses /start payloads', () => {

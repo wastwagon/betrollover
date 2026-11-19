@@ -222,10 +222,37 @@ describe('TelegramChannelService engagement', () => {
     });
 
     expect(calls[0].method).toBe('sendMessage');
-    expect(calls[0].text).toContain('Sure Mix · free');
+    expect(calls[0].text).toContain('Sure Mix · Combined 1.90');
     expect(calls[0].text).toContain('A vs B');
     expect(calls[0].text).toContain('Home Win');
     expect(calls[0].text).toContain('https://t.me/betrollovertips');
+  });
+
+  it('drops SEO match-list titles when free-pick legs already name the fixtures', async () => {
+    const svc = new TelegramChannelService();
+    const calls: { method: string; text?: string }[] = [];
+    global.fetch = jest.fn(async (url, init) => {
+      calls.push(parseTelegramCall(url, init as RequestInit));
+      return { ok: true, json: async () => ({ ok: true }) } as Response;
+    }) as typeof fetch;
+
+    await svc.postNewPick({
+      couponId: 71,
+      title: '2-match pick: Van vs Ararat-Armenia + El Bayadh vs Taghit, 20 Nov 2026',
+      tipsterName: 'Match Winner Tips',
+      totalOdds: 1.57,
+      isFree: true,
+      legs: [
+        { matchDescription: 'Van vs Ararat-Armenia', prediction: 'Away win', odds: 1.29 },
+        { matchDescription: 'El Bayadh vs Taghit', prediction: 'Home win', odds: 1.22 },
+      ],
+    });
+
+    expect(calls[0].text).toContain('Free pick · Combined 1.57');
+    expect(calls[0].text).toContain('Van vs Ararat-Armenia');
+    expect(calls[0].text).toContain('El Bayadh vs Taghit');
+    expect(calls[0].text).not.toMatch(/2-match pick:/);
+    expect(calls[0].text).not.toContain('Van vs Ararat-Armenia + El Bayadh');
   });
 
   it('paid teaser has no booking code and has footer', async () => {

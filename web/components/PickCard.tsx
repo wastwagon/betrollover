@@ -90,6 +90,21 @@ const SPORT_META: Record<string, { label: string }> = {
 const SPORT_CHIP =
   'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--fill-secondary)] text-[var(--text-muted)] border border-[var(--separator)]';
 
+/** Default states already implied by an upcoming kickoff. Showing them again reads as a second status. */
+function restingPickStatus(value: string | null | undefined): boolean {
+  const s = (value || '').trim().toLowerCase();
+  return (
+    s === '' ||
+    s === 'pending' ||
+    s === 'open' ||
+    s === 'active' ||
+    s === 'upcoming' ||
+    s === 'ns' ||
+    s === 'not_started' ||
+    s === 'scheduled'
+  );
+}
+
 interface PickCardProps {
   id: number;
   title: string;
@@ -254,15 +269,26 @@ export function PickCard({
   const picksCountLabel =
     picksN === 1 ? t('pick_card.picks_abbrev_one') : t('pick_card.picks_abbrev', { n: String(picksN) });
 
-  const firstLeg = picks[0];
-  const viewHome = (firstLeg?.homeTeamName || '').trim();
-  const viewAway = (firstLeg?.awayTeamName || '').trim();
-  const viewPredictionLabel =
-    picks.length > 1
-      ? t('pick_card.view_multi', { title: displayTitle })
-      : viewHome && viewAway
-        ? t('pick_card.view_match', { home: viewHome, away: viewAway })
-        : t('pick_card.view_details');
+  const legsOnCard = (showFullDetails || showLockedPreview) && picks.length > 0;
+  const visibleLegCount = !legsOnCard
+    ? 0
+    : showLockedPreview && !showFullDetails
+      ? Math.min(picks.length, 3)
+      : expandableLegs
+        ? legsExpanded
+          ? picks.length
+          : Math.min(picks.length, collapsedLegCount)
+        : Math.min(picks.length, 3);
+  const legsTruncated = legsOnCard && picks.length > visibleLegCount;
+  /** Legs already name every match. Repeat the count only when some rows are hidden. */
+  const showMatchSummary = !legsOnCard || totalPicks > 1 || legsTruncated;
+  const showCouponStatus = !!displayStatus && !restingPickStatus(displayStatus);
+  const sportKey = sport?.toLowerCase() || '';
+  /** Football is the marketplace default — keep the chip for other sports only. */
+  const showSportChip = Boolean(sportKey && sportKey !== 'football' && SPORT_META[sportKey]);
+  const showMetaChips = Boolean(
+    purchaseActivityLabel || showSportChip || showCouponStatus || requiresSubscription,
+  );
 
   const handlePurchase = () => {
     if (price > 0) {
@@ -399,24 +425,46 @@ export function PickCard({
             </div>
           )}
 
-          {/* Coupon title & summary */}
+          {/* Coupon title & summary. Team names live on the legs when those rows are on the card. */}
           <div className="mb-2.5">
-            <div className="flex items-start justify-between gap-2 min-w-0">
-              {displayTitle ? (
-                <h3
-                  className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-[var(--text)] line-clamp-2"
-                  title={displayTitle}
-                >
-                  {displayTitle}
-                </h3>
-              ) : (
-                <span className="flex-1 min-w-0" aria-hidden />
-              )}
-              <span className="text-[12px] text-[var(--text-muted)] whitespace-nowrap flex-shrink-0 tabular-nums pt-0.5">
-                {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
+            {legsOnCard ? (
+              <>
+                {displayTitle ? <h3 className="sr-only">{displayTitle}</h3> : null}
+                {showMatchSummary ? (
+                  <p className="text-[13px] font-semibold tabular-nums text-[var(--text)]">
+                    {legsTruncated
+                      ? t('pick_card.picks_odds', {
+                          n: String(totalPicks),
+                          odds: Number(totalOdds).toFixed(2),
+                        })
+                      : t('pick_card.combined_odds', { odds: Number(totalOdds).toFixed(2) })}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <div className="flex items-start justify-between gap-2 min-w-0">
+                {displayTitle ? (
+                  <h3
+                    className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-[var(--text)] line-clamp-2"
+                    title={displayTitle}
+                  >
+                    {displayTitle}
+                  </h3>
+                ) : (
+                  <span className="flex-1 min-w-0" aria-hidden />
+                )}
+                <span className="text-[12px] text-[var(--text-muted)] whitespace-nowrap flex-shrink-0 tabular-nums pt-0.5">
+                  {t('pick_card.picks_odds', { n: String(totalPicks), odds: Number(totalOdds).toFixed(2) })}
+                </span>
+              </div>
+            )}
+            <KickoffUrgencyLine picks={picks} compact className={legsOnCard && !showMatchSummary ? '' : 'mt-1.5'} />
+            {createdAt ? (
+              <span className="sr-only">
+                {t('pick_card.created')} {formatDateTimeShort(createdAt, lang)}
               </span>
-            </div>
-            <KickoffUrgencyLine picks={picks} compact className="mt-1.5" />
+            ) : null}
+            {showMetaChips ? (
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
               {purchaseActivityLabel && (
                 <span
@@ -426,25 +474,21 @@ export function PickCard({
                   {purchaseActivityLabel}
                 </span>
               )}
-              {createdAt && (
-                <span className="text-[11px] text-[var(--text-muted)]">
-                  {formatDateTimeShort(createdAt, lang)}
-                </span>
-              )}
-              {sport && SPORT_META[sport.toLowerCase()] && (
-                <span className={SPORT_CHIP}>{SPORT_META[sport.toLowerCase()].label}</span>
-              )}
-              {displayStatus && (
+              {showSportChip ? (
+                <span className={SPORT_CHIP}>{SPORT_META[sportKey].label}</span>
+              ) : null}
+              {showCouponStatus && displayStatus ? (
                 <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}>
                   {t(`status.${displayStatus}` as any) || displayStatus.replace(/_/g, ' ')}
                 </span>
-              )}
+              ) : null}
               {requiresSubscription ? (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
                   {t('pick_card.vip_included')}
                 </span>
               ) : null}
             </div>
+            ) : null}
             {price > 0 && priceDisplay && (
               <div className="mt-2">
                 <span className="text-[17px] font-semibold tracking-tight text-[var(--text)]">
@@ -465,21 +509,6 @@ export function PickCard({
               initialCopyCount={bookingCodeCopyCount}
               dense
             />
-          ) : null}
-
-          {isFree && showFullDetails ? (
-            <div className="mb-2">
-              <PickShareButtons
-                couponId={id}
-                title={displayTitle}
-                tipsterName={tipster?.displayName}
-                totalOdds={totalOdds}
-                isFree
-                bookmakerKey={bookmakerKey}
-                bookingCode={bookingCode}
-                dense
-              />
-            </div>
           ) : null}
 
           {/* Pick Details - Show for free or purchased picks */}
@@ -508,7 +537,7 @@ export function PickCard({
                           )}
                           <span className="truncate">{p.matchDescription}</span>
                         </span>
-                        <span className="text-[var(--text-muted)] flex-shrink-0 text-[9px]">
+                        <span className="text-[var(--text-muted)] flex-shrink-0 text-[11px] tabular-nums">
                           {formatFootballOutcomeLabel(p.prediction)} @ {Number(p.odds || 0).toFixed(2)}
                         </span>
                       </div>
@@ -532,19 +561,19 @@ export function PickCard({
                               {t('kickoff.started_short')}
                             </span>
                           ) : matchDate ? (
-                            <span className="text-[9px] text-[var(--text-muted)] tabular-nums">
+                            <span className="text-[11px] text-[var(--text-muted)] tabular-nums">
                               {formatDateTimeShort(matchDate, lang)}
                             </span>
                           ) : null
                         )}
-                        {(hasLiveScore || (p.result || p.status)) && (
+                        {(hasLiveScore || ((p.result || p.status) && !restingPickStatus(p.result || p.status))) && (
                           <div className="flex items-center gap-1">
                             {hasLiveScore && !isFinished && (
                               <span className="text-[9px] font-bold text-[var(--primary)] bg-[var(--primary)]/10 px-1 py-0.5 rounded">
                                 {p.homeScore} - {p.awayScore}
                               </span>
                             )}
-                            {(p.result || p.status) && (
+                            {(p.result || p.status) && !restingPickStatus(p.result || p.status) && (
                               <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-md ${resultChipClass(p.result || p.status)}`}>
                                 {p.result || p.status}
                               </span>
@@ -592,12 +621,12 @@ export function PickCard({
                         )}
                         <span className="truncate">{p.matchDescription}</span>
                       </span>
-                      <span className="text-[var(--text-muted)] flex-shrink-0 text-[9px]">
+                      <span className="text-[var(--text-muted)] flex-shrink-0 text-[11px] tabular-nums">
                         {formatFootballOutcomeLabel(p.prediction)}
                         {p.odds != null ? ` @ ${Number(p.odds || 0).toFixed(2)}` : ''}
                       </span>
                     </div>
-                    <span className="text-[9px] text-[var(--text-muted)] tabular-nums flex flex-wrap gap-x-1.5">
+                    <span className="text-[11px] text-[var(--text-muted)] tabular-nums flex flex-wrap gap-x-1.5">
                       {p.leagueLabel ? <span>{p.leagueLabel}</span> : null}
                       {p.matchDate ? <span>{formatDateTimeShort(p.matchDate, lang)}</span> : null}
                     </span>
@@ -642,6 +671,21 @@ export function PickCard({
             </div>
           )}
 
+          {isFree && showFullDetails ? (
+            <div className="mb-2">
+              <PickShareButtons
+                couponId={id}
+                title={displayTitle}
+                tipsterName={tipster?.displayName}
+                totalOdds={totalOdds}
+                isFree
+                bookmakerKey={bookmakerKey}
+                bookingCode={bookingCode}
+                dense
+              />
+            </div>
+          ) : null}
+
           {socialEnabled && (
             <PickSocialBar
               pickId={id}
@@ -662,7 +706,7 @@ export function PickCard({
                 href={detailsHref ?? `/coupons/${id}`}
                 className={buttonClassName({ variant: 'primary', size: 'sm', fullWidth: true, className: 'text-[13px] font-semibold' })}
               >
-                {viewPredictionLabel}
+                {t('pick_card.view_details')}
               </Link>
             ) : requiresSubscription ? (
               <Link

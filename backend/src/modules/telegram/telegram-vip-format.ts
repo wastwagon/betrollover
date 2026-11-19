@@ -1,5 +1,10 @@
 import { bookmakerLabelForKey } from '@betrollover/shared-types';
-import { telegramKickoffLabel, type TelegramSlipLeg } from './telegram-slip';
+import {
+  formatTelegramLegLine,
+  telegramHeadlineWhenLegsListed,
+  telegramLegsHaveCopy,
+  type TelegramSlipLeg,
+} from './telegram-slip';
 
 export type VipSlipLeg = TelegramSlipLeg;
 
@@ -15,17 +20,15 @@ export function formatVipCouponPost(input: {
     input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
       ? Number(input.totalOdds).toFixed(2)
       : '';
-  const lines = [`BETROLLOVER VIP · ${input.title.trim() || 'Two-Fold'}`];
+  const hasLegs = telegramLegsHaveCopy(input.legs);
+  const label = hasLegs
+    ? telegramHeadlineWhenLegsListed(input.title, 'Two-Fold')
+    : input.title.trim() || 'Two-Fold';
+  const lines = [`BETROLLOVER VIP · ${label}`];
   if (odds) lines.push(`Combined ${odds}`);
   for (const leg of input.legs || []) {
-    const match = (leg.matchDescription || '').trim();
-    const pred = (leg.prediction || '').trim();
-    const lo =
-      leg.odds != null && Number.isFinite(Number(leg.odds)) ? ` @ ${Number(leg.odds).toFixed(2)}` : '';
-    const when = telegramKickoffLabel(leg.matchDate);
-    if (match || pred) {
-      lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred}${lo}${when ? ` · ${when}` : ''}`);
-    }
+    const line = formatTelegramLegLine(leg, 'open');
+    if (line) lines.push(line);
   }
   const code = (input.bookingCode || '').trim();
   if (code) {
@@ -49,14 +52,14 @@ export function formatVipWinPost(input: {
     input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
       ? Number(input.totalOdds).toFixed(2)
       : '';
-  const lines = [`VIP won ✅ · ${input.title.trim() || 'Two-Fold'}${odds ? ` · ${odds}` : ''}`];
+  const hasLegs = telegramLegsHaveCopy(input.legs);
+  const label = hasLegs
+    ? telegramHeadlineWhenLegsListed(input.title, 'Two-Fold')
+    : input.title.trim() || 'Two-Fold';
+  const lines = [`VIP won ✅ · ${label}${odds ? ` · ${odds}` : ''}`];
   for (const leg of input.legs || []) {
-    const match = (leg.matchDescription || '').trim();
-    const pred = (leg.prediction || '').trim();
-    const mark = (leg.result || 'won').toUpperCase();
-    const score =
-      leg.homeScore != null && leg.awayScore != null ? ` FT ${leg.homeScore}-${leg.awayScore}` : '';
-    if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred} · ${mark}${score}`);
+    const line = formatTelegramLegLine(leg, 'settled');
+    if (line) lines.push(line);
   }
   lines.push(input.couponUrl);
   return lines.join('\n');

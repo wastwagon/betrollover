@@ -1081,6 +1081,7 @@ const fr: Record<string, string> = {
   'pick_card.badge_free_unlocks_hint': 'Utilisateurs ayant débloqué ce pronostic gratuit (enregistré sur leur compte)',
   'pick_card.created': 'Créé le',
   'pick_card.picks_odds': '{n} pronostics • {odds} cotes',
+  'pick_card.combined_odds': 'Cote combinée {odds}',
   'pick_card.view_details': 'Voir le pronostic',
   'pick_card.purchase': 'Acheter',
   'pick_card.processing': 'Traitement...',

@@ -1091,6 +1091,7 @@ const en = {
   'pick_card.badge_free_unlocks_hint': 'Users who unlocked this free pick (saved to their account)',
   'pick_card.created': 'Created',
   'pick_card.picks_odds': '{n} picks • {odds} odds',
+  'pick_card.combined_odds': 'Combined odds {odds}',
   'pick_card.view_details': 'View prediction',
   'pick_card.purchase': 'Purchase',
   'pick_card.processing': 'Processing...',

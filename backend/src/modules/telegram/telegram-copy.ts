@@ -1,5 +1,11 @@
 import { LEADERBOARD_MIN_SETTLED_FOR_PRIMARY_RANKING } from '@betrollover/shared-types';
 import { PUBLIC_CHANNEL_SURE_USERNAME } from '../../config/rollover-desk.config';
+import {
+  formatTelegramLegLine,
+  telegramHeadlineWhenLegsListed,
+  telegramLegsHaveCopy,
+  type TelegramSlipLeg,
+} from './telegram-slip';
 
 /**
  * BetRollover Telegram voice — one job per post type.
@@ -270,23 +276,21 @@ export function formatVipPublicWinPost(input: {
   title: string;
   totalOdds?: number | null;
   tipsterName?: string | null;
-  legs?: { matchDescription?: string | null; prediction?: string | null; result?: string | null; homeScore?: number | null; awayScore?: number | null }[];
+  legs?: TelegramSlipLeg[];
 }): string {
   const odds =
     input.totalOdds != null && Number.isFinite(Number(input.totalOdds))
       ? Number(input.totalOdds).toFixed(2)
       : '';
   const who = (input.tipsterName || '').trim();
-  const lines = [
-    `VIP won ✅${who ? ` · ${who}` : ''} · ${(input.title || 'Two-Fold').trim()}${odds ? ` · ${odds}` : ''}`,
-  ];
+  const hasLegs = telegramLegsHaveCopy(input.legs);
+  const label = hasLegs
+    ? telegramHeadlineWhenLegsListed(input.title, 'Two-Fold')
+    : (input.title || 'Two-Fold').trim() || 'Two-Fold';
+  const lines = [`VIP won ✅${who ? ` · ${who}` : ''} · ${label}${odds ? ` · ${odds}` : ''}`];
   for (const leg of input.legs || []) {
-    const match = (leg.matchDescription || '').trim();
-    const pred = (leg.prediction || '').trim();
-    const mark = (leg.result || 'won').toUpperCase();
-    const score =
-      leg.homeScore != null && leg.awayScore != null ? ` FT ${leg.homeScore}-${leg.awayScore}` : '';
-    if (match || pred) lines.push(`• ${match}${match && pred ? ' — ' : ''}${pred} · ${mark}${score}`);
+    const line = formatTelegramLegLine(leg, 'settled');
+    if (line) lines.push(line);
   }
   lines.push('');
   lines.push('VIP desk slips: message @{contact} · Free 7-day board: {site}/rollover');
