@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 import { eliteLeaderboardUsernames, pickEliteShowcase } from '@/lib/home-elite-showcase';
@@ -160,7 +161,7 @@ export function HomeQuickMarketplaceSections({
   }, [seeded.length]);
 
   const skeleton = (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
+    <div className={PICK_CARDS_GRID}>
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="h-40 sm:h-44 rounded-2xl bg-[var(--card)] animate-pulse border border-[var(--separator)]" />
       ))}
@@ -213,7 +214,7 @@ export function HomeQuickMarketplaceSections({
           {loading ? (
             skeleton
           ) : elite.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">{renderCards(elite)}</div>
+            <div className={PICK_CARDS_GRID}>{renderCards(elite)}</div>
           ) : (
             <p className="text-center text-[var(--text-muted)] py-8 text-sm">{t('common.no_results')}</p>
           )}

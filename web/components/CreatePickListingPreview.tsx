@@ -20,6 +20,7 @@ type CreatePickListingPreviewProps = {
 
 /**
  * First-listing preview: how the marketplace card will read before publish.
+ * Legs name the fixtures — headline stays combined odds only (matches PickCard).
  */
 export function CreatePickListingPreview({
   title,
@@ -33,6 +34,13 @@ export function CreatePickListingPreview({
 
   const displayTitle = title.trim() || t('create_pick.preview_untitled');
   const isFree = !(Number(price) > 0);
+  const legsTruncated = selections.length > 3;
+  const oddsLabel = legsTruncated
+    ? t('pick_card.picks_odds', {
+        n: String(selections.length),
+        odds: Number(totalOdds).toFixed(2),
+      })
+    : t('pick_card.combined_odds', { odds: Number(totalOdds).toFixed(2) });
 
   return (
     <div
@@ -42,9 +50,10 @@ export function CreatePickListingPreview({
         {t('create_pick.preview_label')}
       </p>
       <div className="flex items-start justify-between gap-2 min-w-0">
-        <p className="text-sm font-semibold text-[var(--text)] truncate min-w-0" title={displayTitle}>
-          {displayTitle}
-        </p>
+        <div className="min-w-0 flex-1">
+          <h3 className="sr-only">{displayTitle}</h3>
+          <p className="text-sm font-semibold tabular-nums text-[var(--text)]">{oddsLabel}</p>
+        </div>
         <span
           className={`shrink-0 text-xs font-bold tabular-nums ${
             isFree ? 'text-[var(--accent)]' : 'text-[var(--primary)]'
@@ -53,12 +62,6 @@ export function CreatePickListingPreview({
           {isFree ? t('marketplace.filter_free_only') : `GHS ${Number(price).toFixed(2)}`}
         </span>
       </div>
-      <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
-        {t('pick_card.picks_odds', {
-          n: String(selections.length),
-          odds: Number(totalOdds).toFixed(2),
-        })}
-      </p>
       <ul className="mt-2 space-y-1">
         {selections.slice(0, 3).map((s, i) => (
           <li key={i} className="flex justify-between gap-2 text-[11px] min-w-0">
@@ -68,7 +71,7 @@ export function CreatePickListingPreview({
             </span>
           </li>
         ))}
-        {selections.length > 3 ? (
+        {legsTruncated ? (
           <li className="text-[10px] text-[var(--text-muted)] italic">
             {t('pick_card.more_picks', { n: String(selections.length - 3) })}
           </li>

@@ -174,8 +174,6 @@ const fr: Record<string, string> = {
   'home.seo_link_how': 'Comment ça marche et remboursements',
   'home.seo_link_guides': 'Guides courts',
 
-  'pick_card.view_match': 'Voir le pronostic {home} vs {away}',
-  'pick_card.view_multi': 'Voir {title}',
   'pick_card.picks_abbrev': '{n} pronostics',
   'pick_card.picks_abbrev_one': '1 pronostic',
   'home.sellers_cta_title': 'Vendez vos pronostics football sur BetRollover',

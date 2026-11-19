@@ -185,8 +185,6 @@ const en = {
   'home.seo_link_how': 'How it works and refunds',
   'home.seo_link_guides': 'Short guides',
 
-  'pick_card.view_match': 'View {home} vs {away} prediction',
-  'pick_card.view_multi': 'View {title}',
   'pick_card.picks_abbrev': '{n} picks',
   'pick_card.picks_abbrev_one': '1 pick',
   'home.sellers_cta_title': 'Sell your football predictions on BetRollover',

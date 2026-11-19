@@ -22,6 +22,7 @@ import { EscrowTrustCallout } from '@/components/EscrowTrustCallout';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { TipsterTrustStrip, type TipsterReviewSnippet } from '@/components/TipsterTrustStrip';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import type { PickSocialCounts } from '@/components/pick-social/PickSocialBar';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -472,7 +473,7 @@ export default function TipsterProfileClient({
           <LoadingSkeleton
             count={8}
             variant="cards"
-            cardsGridClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8 min-w-0"
+            cardsGridClassName={`${PICK_CARDS_GRID} pb-8`}
           />
         </main>
       </div>
@@ -870,7 +871,7 @@ export default function TipsterProfileClient({
                   ) : null}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+                <div className={PICK_CARDS_GRID}>
                   {filteredActive.map((a) => {
                     const isPurchased = purchasedIds.has(a.id);
                     const canPurchase =
@@ -894,7 +895,6 @@ export default function TipsterProfileClient({
                         requiresSubscription={roster}
                         isPurchased={isPurchased || (roster && revealed)}
                         canPurchase={canPurchase && !roster}
-                        walletBalance={walletBalance}
                         onPurchase={() => purchase(a.id)}
                         purchasing={purchasing === a.id}
                         showUnveil={unveilCouponId === a.id}
@@ -925,7 +925,7 @@ export default function TipsterProfileClient({
                     : t('tipster.no_settled_picks')}
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+                <div className={PICK_CARDS_GRID}>
                   {filteredArchive.map((a) => (
                     <PickCard
                       key={a.id}
@@ -945,7 +945,6 @@ export default function TipsterProfileClient({
                       viewOnly
                       picksRevealed
                       requiresSubscription={isVipRosterUsername(tipster.username)}
-                      walletBalance={walletBalance}
                       onPurchase={() => {}}
                       createdAt={a.createdAt}
                       bookmakerKey={a.bookmakerKey}

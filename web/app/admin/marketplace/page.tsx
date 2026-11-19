@@ -10,6 +10,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { buttonClassName } from '@/components/ui/Button';
 
@@ -414,7 +415,7 @@ export default function AdminMarketplacePage() {
           </div>
         )}
         {!loading && picks.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={PICK_CARDS_GRID}>
             {picks.map((a) => (
               <div key={a.id} className="relative">
                 <label

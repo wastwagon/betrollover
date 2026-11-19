@@ -14,6 +14,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { TipsterSellUnlockChecklist } from '@/components/TipsterSellUnlockChecklist';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
@@ -189,7 +190,7 @@ export default function MyPicksPage() {
             </div>
           )}
 
-          {loading && <LoadingSkeleton count={3} />}
+          {loading && <LoadingSkeleton count={8} variant="cards" cardsGridClassName={PICK_CARDS_GRID} />}
 
           {!loading && picks.length === 0 && (
             <div className="ios-grouped-section">
@@ -214,37 +215,39 @@ export default function MyPicksPage() {
           )}
 
           {!loading && filtered.length > 0 && (
-            <div className="space-y-3 pb-6 min-w-0 max-w-full">
+            <div className="pb-6 min-w-0 max-w-full">
               <p className="text-sm text-[var(--text-muted)] mb-2 min-w-0 break-words">
                 {filtered.length === 1 ? t('my_picks.pick_count', { n: '1' }) : t('my_picks.pick_count_plural', { n: String(filtered.length) })}
                 {sportFilter ? ` · ${SPORT_DISPLAY_MAP[sportFilter] ?? sportFilter}` : ''}
               </p>
-              {filtered.map((a) => (
-                <PickCard
-                  key={a.id}
-                  id={a.id}
-                  title={a.title}
-                  sport={a.sport}
-                  totalPicks={a.totalPicks}
-                  totalOdds={a.totalOdds}
-                  price={a.price}
-                  status={a.status}
-                  result={a.result}
-                  picks={a.picks || []}
-                  bookmakerKey={a.bookmakerKey}
-                  bookingCode={a.bookingCode}
-                  bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
-                  isPurchased={true}
-                  createdAt={a.createdAt}
-                  onPurchase={() => {}}
-                  purchasing={false}
-                  {...getPickCardSocialProps(a, {
-                    onCountsChange: (id, counts) =>
-                      setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
-                    loginRedirectPath: loginRedirectUrl('/my-picks'),
-                  })}
-                />
-              ))}
+              <div className={PICK_CARDS_GRID}>
+                {filtered.map((a) => (
+                  <PickCard
+                    key={a.id}
+                    id={a.id}
+                    title={a.title}
+                    sport={a.sport}
+                    totalPicks={a.totalPicks}
+                    totalOdds={a.totalOdds}
+                    price={a.price}
+                    status={a.status}
+                    result={a.result}
+                    picks={a.picks || []}
+                    bookmakerKey={a.bookmakerKey}
+                    bookingCode={a.bookingCode}
+                    bookingCodeCopyCount={a.bookingCodeCopyCount ?? 0}
+                    isPurchased={true}
+                    createdAt={a.createdAt}
+                    onPurchase={() => {}}
+                    purchasing={false}
+                    {...getPickCardSocialProps(a, {
+                      onCountsChange: (id, counts) =>
+                        setPicks((prev) => mergeSocialCountsIntoList(prev, id, counts)),
+                      loginRedirectPath: loginRedirectUrl('/my-picks'),
+                    })}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>

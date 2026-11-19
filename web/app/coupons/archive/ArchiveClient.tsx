@@ -13,6 +13,7 @@ import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
 import { PullToRefresh } from '@/components/ios/PullToRefresh';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -196,7 +197,6 @@ export default function CouponsArchivePage({
   const [loading, setLoading] = useState(initialCoupons.length === 0);
   const skipNextLoadingRef = useRef(initialCoupons.length > 0);
   const [resultFilter, setResultFilter] = useState<'all' | 'won' | 'lost'>('all');
-  const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<number>>(new Set());
 
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('all');
@@ -217,9 +217,9 @@ export default function CouponsArchivePage({
   const hasPeriodFilter = periodPreset !== 'all';
 
   const loadArchive = useCallback(
-    async (opts?: { withWallet?: boolean }) => {
-      const withWallet = opts?.withWallet !== false;
-      const token = withWallet ? localStorage.getItem('token') : null;
+    async (opts?: { withPurchases?: boolean }) => {
+      const withPurchases = opts?.withPurchases !== false;
+      const token = withPurchases ? localStorage.getItem('token') : null;
       const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       try {
         const archiveRes = await fetch(
@@ -231,13 +231,13 @@ export default function CouponsArchivePage({
         setCoupons(items);
         setSummary(nextSummary);
 
-        if (withWallet && token) {
-          const [wallet, purchased] = await Promise.all([
-            fetch(`${getApiUrl()}/wallet/balance`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : null)),
-            fetch(`${getApiUrl()}/accumulators/purchased`, { headers: authHeaders }).then((r) => (r.ok ? r.json() : [])),
-          ]);
-          if (wallet) setWalletBalance(Number(wallet.balance));
-          const ids = new Set<number>((purchased || []).map((p: { accumulatorId?: number }) => p.accumulatorId).filter(Boolean));
+        if (withPurchases && token) {
+          const purchased = await fetch(`${getApiUrl()}/accumulators/purchased`, {
+            headers: authHeaders,
+          }).then((r) => (r.ok ? r.json() : []));
+          const ids = new Set<number>(
+            (purchased || []).map((p: { accumulatorId?: number }) => p.accumulatorId).filter(Boolean),
+          );
           setPurchasedIds(ids);
         }
       } catch {
@@ -253,7 +253,7 @@ export default function CouponsArchivePage({
     (async () => {
       if (skipNextLoadingRef.current) skipNextLoadingRef.current = false;
       else setLoading(true);
-      await loadArchive({ withWallet: true });
+      await loadArchive({ withPurchases: true });
       if (!cancelled) setLoading(false);
     })();
     return () => {
@@ -263,7 +263,7 @@ export default function CouponsArchivePage({
 
   useEffect(() => {
     const tick = () => {
-      void loadArchive({ withWallet: false });
+      void loadArchive({ withPurchases: false });
     };
     const id = window.setInterval(tick, ARCHIVE_POLL_MS);
     const onVis = () => {
@@ -321,7 +321,7 @@ export default function CouponsArchivePage({
       <main className="section-ux-page-wide w-full min-w-0 max-w-full">
         <PullToRefresh
           onRefresh={async () => {
-            await loadArchive({ withWallet: true });
+            await loadArchive({ withPurchases: true });
           }}
           disabled={loading}
         >
@@ -477,7 +477,7 @@ export default function CouponsArchivePage({
           <LoadingSkeleton
             count={8}
             variant="cards"
-            cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+            cardsGridClassName={PICK_CARDS_GRID}
           />
         ) : filtered.length === 0 ? (
           <EmptyState
@@ -495,7 +495,7 @@ export default function CouponsArchivePage({
             actionHref="/marketplace"
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
+          <div className={PICK_CARDS_GRID}>
             {filtered.map((coupon) => (
               <PickCard
                 key={coupon.id}
@@ -512,7 +512,6 @@ export default function CouponsArchivePage({
                 tipster={coupon.tipster ?? null}
                 isPurchased={purchasedIds.has(coupon.id)}
                 canPurchase={false}
-                walletBalance={walletBalance}
                 viewOnly
                 picksRevealed={coupon.picksRevealed === true}
                 requiresSubscription={coupon.requiresSubscription === true}

@@ -13,6 +13,7 @@ import { IconStar, IconEarnings, IconTrending } from '@/components/ios/icons';
 import { useT } from '@/context/LanguageContext';
 import { getAvatarUrl, shouldUnoptimizeGoogleAvatar } from '@/lib/site-config';
 import { getPickCardSocialProps } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { isFootballOnlyDiscovery } from '@/lib/football-only-discovery';
 import { isSubscriptionsEnabled } from '@/lib/subscriptions-enabled';
@@ -212,7 +213,7 @@ export function UserDashboardHome({
                     {t('dashboard.vip_picks_see_all')}
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
+                <div className={PICK_CARDS_GRID}>
                   {vipFeedPicks.slice(0, 4).map((pick) => {
                     const tip = pick.tipster;
                     const tipster = tip
@@ -245,7 +246,6 @@ export function UserDashboardHome({
                         bookingCodeCopyCount={pick.bookingCodeCopyCount ?? 0}
                         isPurchased
                         canPurchase={false}
-                        walletBalance={null}
                         onPurchase={() => {}}
                         viewOnly
                         purchasing={false}
@@ -297,7 +297,7 @@ export function UserDashboardHome({
                   {feedPicks.length > 0 ? (
                     <div>
                       <p className="text-sm text-[var(--text-muted)] mb-3">{t('dashboard.latest_picks')}</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                      <div className={PICK_CARDS_GRID}>
                         {feedPicks.slice(0, 4).map((pick) => {
                           const isPurchased = purchases.some((p) => p.accumulatorId === pick.id);
                           const subscriptionLocked =
@@ -323,7 +323,6 @@ export function UserDashboardHome({
                               bookingCodeCopyCount={pick.bookingCodeCopyCount ?? 0}
                               isPurchased={isPurchased}
                               canPurchase={canPurchase}
-                              walletBalance={walletBalance}
                               onPurchase={() => onPurchaseFeed(pick)}
                               purchasing={feedPurchasing === pick.id}
                               {...getPickCardSocialProps(pick, {

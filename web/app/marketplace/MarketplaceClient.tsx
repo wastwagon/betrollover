@@ -25,6 +25,7 @@ import { matchesMarketplaceDayFilter, type MarketplaceDayFilter } from '@/lib/ac
 import { getApiUrl } from '@/lib/site-config';
 import { getApiErrorMessage } from '@/lib/api-error-message';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import {
   FOOTBALL_SPORT_KEY,
@@ -612,7 +613,6 @@ export default function MarketplacePage({
         isPurchased={isPurchased}
         canPurchase={canPurchase}
         expandableLegs
-        walletBalance={walletBalance}
         onPurchase={() => purchase(a.id)}
         purchasing={purchasing === a.id}
         showUnveil={unveilCouponId === a.id}
@@ -826,7 +826,7 @@ export default function MarketplacePage({
             <LoadingSkeleton
               count={8}
               variant="cards"
-              cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pb-8 min-w-0"
+              cardsGridClassName={`${PICK_CARDS_GRID} pb-8`}
             />
           )}
           {!loading && picks.length === 0 && (
@@ -874,7 +874,7 @@ export default function MarketplacePage({
           )}
           {!loading && filteredAndSortedPicks.length > 0 && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 pb-8 min-w-0">
+              <div className={`${PICK_CARDS_GRID} pb-8`}>
                 {filteredAndSortedPicks.map((a) => renderMarketplacePickCard(a))}
               </div>
             </>

@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { EmptyState } from '@/components/EmptyState';
@@ -363,7 +364,7 @@ export default function MyPurchasesPage() {
             <LoadingSkeleton
               count={8}
               variant="cards"
-              cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6 min-w-0 max-w-full"
+              cardsGridClassName={`${PICK_CARDS_GRID} pb-6 max-w-full`}
             />
           )}
 
@@ -428,7 +429,7 @@ export default function MyPurchasesPage() {
           )}
 
           {!loading && filtered.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6 min-w-0 max-w-full">
+            <div className={`${PICK_CARDS_GRID} pb-6 max-w-full`}>
               {filtered.map((p) =>
                 p.pick ? (
                   <div key={p.id} className="flex flex-col gap-2 min-w-0">

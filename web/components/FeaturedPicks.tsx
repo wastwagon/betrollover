@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { getApiUrl } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
@@ -82,7 +83,7 @@ export function FeaturedPicks({
           <h2 className="text-base md:text-lg font-semibold text-[var(--text)]">{t('marketplace.featured_section_title')}</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">{t('marketplace.featured_section_subtitle')}</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={PICK_CARDS_GRID}>
           {picks.map((a) => (
             <PickCard
               key={a.id}

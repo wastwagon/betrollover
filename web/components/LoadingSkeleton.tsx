@@ -1,5 +1,7 @@
 'use client';
 
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
+
 interface LoadingSkeletonProps {
   count?: number;
   className?: string;
@@ -9,8 +11,6 @@ interface LoadingSkeletonProps {
   cardsGridClassName?: string;
 }
 
-const DEFAULT_CARDS_GRID = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4';
-
 export function LoadingSkeleton({
   count = 3,
   className = '',
@@ -18,7 +18,7 @@ export function LoadingSkeleton({
   cardsGridClassName,
 }: LoadingSkeletonProps) {
   const isCards = variant === 'cards';
-  const cardsGrid = (cardsGridClassName?.trim() || DEFAULT_CARDS_GRID).trim();
+  const cardsGrid = (cardsGridClassName?.trim() || PICK_CARDS_GRID).trim();
 
   return (
     <div

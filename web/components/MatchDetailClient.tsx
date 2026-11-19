@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { AdSlot } from '@/components/AdSlot';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { getApiUrl, shouldUnoptimizeRemoteImage } from '@/lib/site-config';
 import { useT } from '@/context/LanguageContext';
@@ -305,7 +306,7 @@ export function MatchDetailClient({ initial }: { initial: PublicFixtureDetail })
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className={PICK_CARDS_GRID}>
               {related.map((a) => (
                 <PickCard
                   key={a.id}

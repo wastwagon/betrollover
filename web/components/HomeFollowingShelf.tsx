@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PickCard } from '@/components/PickCard';
 import { getApiUrl } from '@/lib/site-config';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { useT } from '@/context/LanguageContext';
 import { AUTH_STORAGE_SYNC } from '@/lib/auth-storage-sync';
@@ -143,7 +144,7 @@ export function HomeFollowingShelf() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 min-w-0">
+          <div className={PICK_CARDS_GRID}>
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
@@ -159,7 +160,7 @@ export function HomeFollowingShelf() {
             </Link>
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 min-w-0">
+          <div className={PICK_CARDS_GRID}>
             {items.map((a) => (
               <PickCard
                 key={a.id}

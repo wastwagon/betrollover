@@ -136,7 +136,6 @@ interface PickCardProps {
   /** Collapse revealed legs to a few rows with expand (OddsJam-style stay-in-feed). */
   expandableLegs?: boolean;
   collapsedLegCount?: number;
-  walletBalance?: number | null;
   onPurchase: () => void;
   purchasing?: boolean;
   showUnveil?: boolean;
@@ -175,7 +174,6 @@ export function PickCard({
   detailsHref,
   expandableLegs = false,
   collapsedLegCount = 2,
-  walletBalance,
   onPurchase,
   purchasing = false,
   showUnveil = false,
@@ -206,7 +204,7 @@ export function PickCard({
   const t = useT();
   const { lang } = useLanguage();
   const clientNow = useClientNow(30_000);
-  const { format, currency } = useCurrency();
+  const { format } = useCurrency();
   const loginRedirectPath = loginRedirectPathProp ?? loginRedirectUrl('/marketplace');
 
   /** Price display: primary in selected currency, secondary shows GHS if different */
@@ -226,8 +224,8 @@ export function PickCard({
       !!(p.homeTeamName || p.awayTeamName || (p.matchDescription && /vs/i.test(p.matchDescription))),
   );
   const showFullDetails = isPurchased || picksRevealed || (isFree && hasPublicLegPreview && !requiresSubscription);
-  /** Match primary CTA to server-granted leg visibility (subscription, settled, login, etc.). */
-  const showAccessCTA = isPurchased || picksRevealed || (isFree && hasPublicLegPreview && !requiresSubscription);
+  /** Same reveal gate as legs — View CTA when the buyer already has access. */
+  const showAccessCTA = showFullDetails;
   const showLockedPreview = !showFullDetails && hasPublicLegPreview;
   const subscribeHref = tipster?.username
     ? `/tipsters/${encodeURIComponent(tipster.username)}#subscription-packages`

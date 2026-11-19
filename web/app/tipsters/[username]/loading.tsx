@@ -1,4 +1,5 @@
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 
 export default function TipsterProfileLoading() {
   return (
@@ -48,7 +49,7 @@ export default function TipsterProfileLoading() {
         <LoadingSkeleton
           count={8}
           variant="cards"
-          cardsGridClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pb-8 min-w-0"
+          cardsGridClassName={`${PICK_CARDS_GRID} pb-8`}
         />
       </div>
     </div>

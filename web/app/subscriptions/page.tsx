@@ -7,6 +7,7 @@ import { DashboardShell } from '@/components/DashboardShell';
 import { PageHeader } from '@/components/PageHeader';
 import { PickCard } from '@/components/PickCard';
 import { getPickCardSocialProps, mergeSocialCountsIntoList } from '@/lib/pick-card-social';
+import { PICK_CARDS_GRID } from '@/lib/pick-card-layout';
 import { loginRedirectUrl } from '@/lib/login-redirect-path';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { getApiUrl } from '@/lib/site-config';
@@ -131,7 +132,7 @@ function SubscriptionsContent() {
           <LoadingSkeleton
             count={4}
             variant="cards"
-            cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+            cardsGridClassName={PICK_CARDS_GRID}
           />
         </div>
       </DashboardShell>
@@ -275,12 +276,12 @@ function SubscriptionsContent() {
                 <LoadingSkeleton
                   count={2}
                   variant="cards"
-                  cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+                  cardsGridClassName={PICK_CARDS_GRID}
                 />
               ) : feedPicks.length === 0 ? (
                 <p className="text-[var(--text-muted)]">{t('subscriptions.feed_empty')}</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0">
+                <div className={PICK_CARDS_GRID}>
                   {feedPicks.map((pick) => {
                     const tipMeta = pick.tipster;
                     const tipster = tipMeta
@@ -314,7 +315,6 @@ function SubscriptionsContent() {
                         bookingCodeCopyCount={pick.bookingCodeCopyCount ?? 0}
                         isPurchased={true}
                         canPurchase={false}
-                        walletBalance={null}
                         onPurchase={() => {}}
                         viewOnly
                         purchasing={false}
@@ -346,7 +346,7 @@ export default function SubscriptionsPage() {
             <LoadingSkeleton
               count={4}
               variant="cards"
-              cardsGridClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 min-w-0"
+              cardsGridClassName={PICK_CARDS_GRID}
             />
           </div>
         </DashboardShell>
